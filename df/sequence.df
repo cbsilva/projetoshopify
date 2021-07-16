@@ -1,0 +1,15 @@
+ADD SEQUENCE "seq_import"
+  INITIAL 0
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+
+ADD SEQUENCE "seq_export"
+  INITIAL 0
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  
+.
+PSC
+cpstream=ibm850
+.
+0000052357
