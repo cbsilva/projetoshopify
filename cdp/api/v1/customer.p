@@ -102,8 +102,42 @@ PROCEDURE pi-update:
     DEFINE VARIABLE CodigoCliente           AS CHARACTER INITIAL ?  NO-UNDO.
 
 
+    oJsonArrayMain = jsonInput:GetJsonObject("payload":U):GetJsonArray("customer":U).
 
-    RUN createJsonResponse(NEW JsonObject(), INPUT TABLE RowErrors, INPUT FALSE, OUTPUT jsonOutput).
+    DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
+        oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
+
+        IF oJsonObjectMain:Has("CNPJ_CPF")                   then do:
+            cCnpjCpf = oJsonObjectMain:GetCharacter("CNPJ_CPF")  NO-ERROR             .
+            LEAVE.
+        END.
+    END.
+
+    /*-- precisa verificar no ambiente qual ser  o numero da integra‡Æo*/
+    CREATE  es-api-import.                                            
+    ASSIGN  es-api-import.id-movto          = NEXT-VALUE(seq_import)  
+            es-api-import.cd-tipo-integr    = 999 // Customer     
+            es-api-import.chave             = cCnpjCpf     
+            es-api-import.data-movto        = NOW                     
+            es-api-import.data-inicio       = NOW                     
+            es-api-import.data-fim          = ?                       
+            es-api-import.ind-situacao      = 0 /*--- Pendente ---*/  
+            es-api-import.cod-status        = 0 /*--- sem status ---*/
+            es-api-import.c-json            = jsonRecebido.   
+
+
+    RUN pi-gera-status (cCnpjCpf,                
+                        "Sucesso",                          
+                        "").                                
+                                                            
+    /* -------- Grava retorno ------*/                      
+    ASSIGN  jsonRetorno = NEW JsonArray().                  
+            jsonRetorno:Read(TEMP-TABLE ttRetorno:HANDLE).  
+                                                            
+    RUN createJsonResponse(INPUT jsonRetorno,               
+                           INPUT TABLE RowErrors,           
+                           INPUT FALSE,                     
+                           OUTPUT jsonOutput).
 END PROCEDURE.
 
 
