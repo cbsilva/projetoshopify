@@ -36,6 +36,7 @@ DEFINE VARIABLE iCountSec        AS INTEGER    NO-UNDO.
 DEFINE VARIABLE h-boad098        AS HANDLE     NO-UNDO.
 DEFINE VARIABLE iErro            AS INTEGER    NO-UNDO.
 DEFINE VARIABLE iCodEmitente     AS INTEGER    NO-UNDO.
+DEFINE VARIABLE rw-emitente      AS ROWID      NO-UNDO.
 
 
 /* --------------------------------------------------------------------------------------------
@@ -55,16 +56,11 @@ FUNCTION fnNatureza RETURNS INTEGER (INPUT pParam AS CHAR):
 END FUNCTION.
 
 
-
-
-
-
 /* --------------------------------------------------------------------------------------------
     Define input parameters
 ----------------------------------------------------------------------------------------------*/
 
 DEFINE INPUT  PARAM TABLE FOR ttCustomer.
-DEFINE INPUT  PARAM TABLE FOR ttEnderecoList.
 DEFINE OUTPUT PARAM TABLE FOR RowErrors.
 
 
@@ -83,21 +79,11 @@ DO:
 END.
 
 
-
-
 FOR FIRST ttCustomer:
 
     EMPTY TEMP-TABLE tt-emitente.
 
     RUN findCGC IN h-boad098 (INPUT ttCustomer.CNPJ, OUTPUT c-return).
-
-    /*-- ver uma forma de amarrar as duas temp-tables --*/
-    FIND FIRST ttEnderecoList NO-LOCK NO-ERROR.
-    IF NOT AVAIL ttEnderecoList THEN
-    DO:
-        RUN piErro("SHOPIFY | Endereáo do cliente n∆o informado.","").
-        RETURN "NOK":U.
-    END.
 
     IF RETURN-VALUE = "OK" THEN 
         RUN piAlteraCliente.
@@ -112,6 +98,45 @@ IF VALID-HANDLE(h-boad098) THEN
 
 PROCEDURE piAlteraCliente:
 
+    FOR FIRST emitente WHERE emitente.cgc = ttCustomer.CNPJ NO-LOCK:
+
+        ASSIGN iCodEmitente = emitente.cod-emitente.
+
+        CREATE tt-emitente.
+        BUFFER-COPY emitente TO tt-emitente
+            ASSIGN tt-emitente.nome-emit        = ttCustomer.RazaoSocial
+                   tt-emitente.Telefone         = ttCustomer.telefone      
+                   tt-emitente.e-mail           = ttCustomer.email
+                   tt-emitente.endereco         = ttCustomer.Endereco         
+                   tt-emitente.bairro           = ttCustomer.bairro           
+                   tt-emitente.cidade           = ttCustomer.cidade           
+                   tt-emitente.estado           = ttCustomer.estado           
+                   tt-emitente.pais             = ttCustomer.pais             
+                   tt-emitente.CEP              = ttCustomer.cep             
+                   tt-emitente.endereco-cob     = ttCustomer.Endereco         
+                   tt-emitente.bairro-cob       = ttCustomer.bairro           
+                   tt-emitente.cidade-cob       = ttCustomer.cidade           
+                   tt-emitente.estado-cob       = ttCustomer.estado           
+                   tt-emitente.pais-cob         = ttCustomer.pais             
+                   tt-emitente.cep-cob          = ttCustomer.cep
+                   tt-emitente.r-rowid          = ROWID(emitente).
+
+        RUN openQuery      IN h-boad098 (INPUT 1).
+        RUN validateUpdate IN h-boad098 (INPUT TABLE tt-emitente,
+                                         INPUT tt-emitente.r-rowid,
+                                         OUTPUT TABLE tt-bo-erro).
+
+        IF CAN-FIND(FIRST tt-bo-erro NO-LOCK) THEN     
+        DO:                                            
+            FOR EACH tt-bo-erro NO-LOCK:               
+                RUN piErro(tt-bo-erro.mensagem,"").    
+            END.                                       
+                                                       
+                                                       
+        END.                                           
+        ELSE RUN pi-AtualizaEMS5.                      
+        
+    END.
 
 END PROCEDURE.
 
@@ -129,23 +154,22 @@ PROCEDURE piCriaCliente:
            tt-emitente.identific                   = 1 /*-- cliente --*/
            tt-emitente.natureza                    = fnNatureza(ttCustomer.cnpj)
            tt-emitente.nome-emit                   = ttCustomer.RazaoSocial
-           tt-emitente.endereco                    = ttEnderecoList.logradouro
-           tt-emitente.bairro                      = ttEnderecoList.bairro
-           tt-emitente.cidade                      = ttEnderecoList.cidade
-           tt-emitente.estado                      = ttEnderecoList.estado
-           tt-emitente.pais                        = ttEnderecoList.pais
-           tt-emitente.CEP                         = ttEnderecoList.cep  
+           tt-emitente.endereco                    = ttCustomer.Endereco
+           tt-emitente.bairro                      = ttCustomer.bairro
+           tt-emitente.cidade                      = ttCustomer.cidade
+           tt-emitente.estado                      = ttCustomer.estado
+           tt-emitente.pais                        = ttCustomer.pais
+           tt-emitente.CEP                         = ttCustomer.cep  
            tt-emitente.End-cobranca                = iCodEmitente
-           tt-emitente.endereco-cob                = ttEnderecoList.logradouro           
-           tt-emitente.bairro-cob                  = ttEnderecoList.bairro               
-           tt-emitente.cidade-cob                  = ttEnderecoList.cidade               
-           tt-emitente.estado-cob                  = ttEnderecoList.estado               
-           tt-emitente.pais-cob                    = ttEnderecoList.pais                 
-           tt-emitente.cep-cob                     = ttEnderecoList.cep
+           tt-emitente.endereco-cob                = ttCustomer.Endereco           
+           tt-emitente.bairro-cob                  = ttCustomer.bairro               
+           tt-emitente.cidade-cob                  = ttCustomer.cidade               
+           tt-emitente.estado-cob                  = ttCustomer.estado               
+           tt-emitente.pais-cob                    = ttCustomer.pais                 
+           tt-emitente.cep-cob                     = ttCustomer.cep
            tt-emitente.Ins-estadual                = 'ISENTO'                                           
            tt-emitente.Taxa-financ                 = 0                                                  
            tt-emitente.Cod-transp                  = es-api-param-cliente.cod-transp
-           tt-emitente.Contato                     = ""
            tt-emitente.Telefone                    = ttCustomer.telefone
            tt-emitente.e-mail                      = ttCustomer.email
            tt-emitente.data-implant                = TODAY
@@ -175,6 +199,48 @@ PROCEDURE piCriaCliente:
 
 
 
+    RUN openQuery      IN h-boad098 (INPUT 1).                                   
+    RUN validateCreate IN h-boad098 (INPUT TABLE tt-emitente,                                                       
+                                     OUTPUT TABLE tt-bo-erro,
+                                     OUTPUT rw-emitente).
+
+
+    IF CAN-FIND(FIRST tt-bo-erro NO-LOCK) THEN 
+    DO:
+        FOR EACH tt-bo-erro NO-LOCK:
+            RUN piErro(tt-bo-erro.mensagem,"").
+        END.
+    
+        
+    END.
+    ELSE RUN pi-AtualizaEMS5.
+
+
+END PROCEDURE.
+
+
+PROCEDURE pi-AtualizaEMS5:
+                   
+   /************* Integracao 2.00 X 5.00 *****************/      
+   IF CAN-FIND(funcao WHERE funcao.cd-funcao = "adm-cdc-ems-5.00"
+       AND funcao.ativo = YES                                    
+       AND funcao.log-1 = YES) THEN DO:                          
+       FIND FIRST param-global NO-LOCK NO-ERROR.                 
+       IF  param-global.log-2 = YES THEN DO:                     
+           VALIDATE emitente NO-ERROR.                           
+           RUN cdp/cd1608.p (INPUT tt-emitente.cod-emitente,     
+                             INPUT tt-emitente.cod-emitente,     
+                             INPUT tt-emitente.identific,        
+                             INPUT YES,                          
+                             INPUT 1,                            
+                             INPUT 0,                            
+                             INPUT "utb765zb.tmp",               
+                             INPUT "Terminal":U,                 
+                             INPUT "").                          
+                                                                 
+       END.                                                      
+   END.                                                          
+   /*********** Fim Integracao 2.00 X 5.00 ****************/ 
 
 END PROCEDURE.
 
