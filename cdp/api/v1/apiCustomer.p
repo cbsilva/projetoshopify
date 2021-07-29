@@ -35,10 +35,14 @@ PROCEDURE pi-create:
     DEFINE INPUT  PARAMETER jsonInput  AS JsonObject NO-UNDO.
     DEFINE OUTPUT PARAMETER jsonOutput AS JsonObject NO-UNDO.
 
+    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Shopify\logIntegracao\teste.txt") APPEND.
+        PUT UNFORMATTED "INICIO DA INTEGRACAO DE CLIENTES" SKIP.
+
     FIX-CODEPAGE(jsonRecebido) = "UTF-8".
 
     ASSIGN oRequestParser  = NEW JsonAPIRequestParser(jsonInput)
            jsonRecebido    = oRequestParser:getPayloadLongChar()
+           i-prox-numero   = NEXT-VALUE(seq_import)
            cCnpjCpf        = "".
 
 
@@ -47,15 +51,16 @@ PROCEDURE pi-create:
     DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
         oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
 
-        IF oJsonObjectMain:Has("CNPJ")                   then do:
-            cCnpjCpf = oJsonObjectMain:GetCharacter("CNPJ")  NO-ERROR             .
+        IF oJsonObjectMain:Has("CNPJ")   then do:
+            cCnpjCpf = REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("CNPJ"),".",""),"/",""),"-","")  NO-ERROR             .
             LEAVE.
         END.
     END.
 
+    MESSAGE SUBSTITUTE("PROXIMO NUMERO &1", i-prox-numero).
     
     CREATE  es-api-import.                                            
-    ASSIGN  es-api-import.id-movto          = NEXT-VALUE(seq_import)  
+    ASSIGN  es-api-import.id-movto          = i-prox-numero 
             es-api-import.cd-tipo-integr    = 21 /*-- Importacao de Clientes --*/   
             es-api-import.chave             = cCnpjCpf     
             es-api-import.data-movto        = NOW                     
@@ -67,7 +72,7 @@ PROCEDURE pi-create:
 
 
     RUN pi-gera-status (cCnpjCpf,                
-                        "Sucesso",                          
+                        "Registro em processamento",                          
                         "").                                
                                                             
     /* -------- Grava retorno ------*/                      
@@ -77,12 +82,9 @@ PROCEDURE pi-create:
     RUN createJsonResponse(INPUT jsonRetorno,               
                            INPUT TABLE RowErrors,           
                            INPUT FALSE,                     
-                           OUTPUT jsonOutput).              
+                           OUTPUT jsonOutput).
 
-
-
-
-    
+    OUTPUT CLOSE.
 
 END PROCEDURE.
 
@@ -96,11 +98,14 @@ PROCEDURE pi-update:
     DEFINE INPUT  PARAMETER jsonInput  AS JsonObject NO-UNDO.
     DEFINE OUTPUT PARAMETER jsonOutput AS JsonObject NO-UNDO.
 
-    DEFINE VARIABLE jsonRetorno             AS JsonArray            NO-UNDO.
-    DEFINE VARIABLE json_recebido           AS LONGCHAR             NO-UNDO.
-    DEFINE VARIABLE oRequestParser          AS JsonAPIRequestParser NO-UNDO.
-    DEFINE VARIABLE CodigoCliente           AS CHARACTER INITIAL ?  NO-UNDO.
+    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Shopify\logIntegracao\alteraCliente.txt").
 
+     FIX-CODEPAGE(jsonRecebido) = "UTF-8".
+
+    ASSIGN oRequestParser  = NEW JsonAPIRequestParser(jsonInput)
+           jsonRecebido    = oRequestParser:getPayloadLongChar()
+           i-prox-numero   = NEXT-VALUE(seq_import)
+           cCnpjCpf        = "".
 
     oJsonArrayMain = jsonInput:GetJsonObject("payload":U):GetJsonArray("customer":U).
 
@@ -108,14 +113,16 @@ PROCEDURE pi-update:
         oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
 
         IF oJsonObjectMain:Has("CNPJ")                   then do:
-            cCnpjCpf = oJsonObjectMain:GetCharacter("CNPJ")  NO-ERROR             .
+            cCnpjCpf = REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("CNPJ"),".",""),"/",""),"-","")  NO-ERROR             .
             LEAVE.
         END.
     END.
 
+    MESSAGE SUBSTITUTE("PROXIMO NUMERO &1", i-prox-numero).
+
     
     CREATE  es-api-import.                                            
-    ASSIGN  es-api-import.id-movto          = NEXT-VALUE(seq_import)  
+    ASSIGN  es-api-import.id-movto          = i-prox-numero  
             es-api-import.cd-tipo-integr    = 21 /*-- Importacao de Clientes --*/ 
             es-api-import.chave             = cCnpjCpf     
             es-api-import.data-movto        = NOW                     
@@ -127,7 +134,7 @@ PROCEDURE pi-update:
 
 
     RUN pi-gera-status (cCnpjCpf,                
-                        "Sucesso",                          
+                        "Registro em processamento",                          
                         "").                                
                                                             
     /* -------- Grava retorno ------*/                      
@@ -138,6 +145,9 @@ PROCEDURE pi-update:
                            INPUT TABLE RowErrors,           
                            INPUT FALSE,                     
                            OUTPUT jsonOutput).
+    OUTPUT CLOSE.
+
+
 END PROCEDURE.
 
 
