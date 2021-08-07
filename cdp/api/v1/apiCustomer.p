@@ -59,16 +59,16 @@ PROCEDURE pi-create:
 
     MESSAGE SUBSTITUTE("PROXIMO NUMERO &1", i-prox-numero).
     
-    CREATE  es-api-import.                                            
-    ASSIGN  es-api-import.id-movto          = i-prox-numero 
-            es-api-import.cd-tipo-integr    = 21 /*-- Importacao de Clientes --*/   
-            es-api-import.chave             = cCnpjCpf     
-            es-api-import.data-movto        = NOW                     
-            es-api-import.data-inicio       = NOW                     
-            es-api-import.data-fim          = ?                       
-            es-api-import.ind-situacao      = 0 /*--- Pendente ---*/  
-            es-api-import.cod-status        = 0 /*--- sem status ---*/
-            es-api-import.c-json            = jsonRecebido.   
+    CREATE  es-api-import-spf.                                            
+    ASSIGN  es-api-import-spf.id-movto          = i-prox-numero 
+            es-api-import-spf.cd-tipo-integr    = 21 /*-- Importacao de Clientes --*/   
+            es-api-import-spf.chave             = cCnpjCpf     
+            es-api-import-spf.data-movto        = NOW                     
+            es-api-import-spf.data-inicio       = NOW                     
+            es-api-import-spf.data-fim          = ?                       
+            es-api-import-spf.ind-situacao      = 0 /*--- Pendente ---*/  
+            es-api-import-spf.cod-status        = 0 /*--- sem status ---*/
+            es-api-import-spf.c-json            = jsonRecebido.   
 
 
     RUN pi-gera-status (cCnpjCpf,                
@@ -121,16 +121,16 @@ PROCEDURE pi-update:
     MESSAGE SUBSTITUTE("PROXIMO NUMERO &1", i-prox-numero).
 
     
-    CREATE  es-api-import.                                            
-    ASSIGN  es-api-import.id-movto          = i-prox-numero  
-            es-api-import.cd-tipo-integr    = 21 /*-- Importacao de Clientes --*/ 
-            es-api-import.chave             = cCnpjCpf     
-            es-api-import.data-movto        = NOW                     
-            es-api-import.data-inicio       = NOW                     
-            es-api-import.data-fim          = ?                       
-            es-api-import.ind-situacao      = 0 /*--- Pendente ---*/  
-            es-api-import.cod-status        = 0 /*--- sem status ---*/
-            es-api-import.c-json            = jsonRecebido.   
+    CREATE  es-api-import-spf.                                            
+    ASSIGN  es-api-import-spf.id-movto          = i-prox-numero  
+            es-api-import-spf.cd-tipo-integr    = 21 /*-- Importacao de Clientes --*/ 
+            es-api-import-spf.chave             = cCnpjCpf     
+            es-api-import-spf.data-movto        = NOW                     
+            es-api-import-spf.data-inicio       = NOW                     
+            es-api-import-spf.data-fim          = ?                       
+            es-api-import-spf.ind-situacao      = 0 /*--- Pendente ---*/  
+            es-api-import-spf.cod-status        = 0 /*--- sem status ---*/
+            es-api-import-spf.c-json            = jsonRecebido.   
 
 
     RUN pi-gera-status (cCnpjCpf,                
