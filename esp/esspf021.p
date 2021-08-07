@@ -93,7 +93,6 @@ DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
     MESSAGE "CHAMANDO ROTINA PARA CRIAR OS DADOS NA TEMP-TABLE".
 
     RUN pi-criaTTEmitente.
-    //RUN pi-criaEndereco.
 
 END.
 
@@ -119,18 +118,18 @@ END.
 
 PROCEDURE pi-criaTTEmitente:
 
-    IF oJsonObjectMain:Has(TRIM("RazaoSocial        ")) THEN ASSIGN ttCustomer.RazaoSocial     = oJsonObjectMain:GetCharacter(TRIM("RazaoSocial       "))          NO-ERROR. 
-    IF oJsonObjectMain:Has(TRIM("CNPJ               ")) THEN ASSIGN ttCustomer.CNPJ            = oJsonObjectMain:GetCharacter(TRIM("CNPJ              "))          NO-ERROR. 
-    IF oJsonObjectMain:Has(TRIM("IE                 ")) THEN ASSIGN ttCustomer.IE              = oJsonObjectMain:GetCharacter(TRIM("IE                "))          NO-ERROR. 
-    IF oJsonObjectMain:Has(TRIM("Email              ")) THEN ASSIGN ttCustomer.Email           = oJsonObjectMain:GetCharacter(TRIM("Email             "))          NO-ERROR. 
-    IF oJsonObjectMain:Has(TRIM("Telefone           ")) THEN ASSIGN ttCustomer.Telefone        = oJsonObjectMain:GetCharacter(TRIM("Telefone          "))          NO-ERROR.    
-    IF oJsonObjectMain:Has(TRIM("InscMunicipal      ")) THEN ASSIGN ttCustomer.InscMunicipal   = oJsonObjectMain:GetCharacter(TRIM("InscMunicipal     "))          NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Endereco           ")) THEN ASSIGN ttCustomer.Endereco        = oJsonObjectMain:GetCharacter (TRIM("Endereco        "))          NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Bairro             ")) THEN ASSIGN ttCustomer.Bairro          = oJsonObjectMain:GetCharacter (TRIM("Bairro          "))          NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Cep                ")) THEN ASSIGN ttCustomer.Cep             = REPLACE(oJsonObjectMain:GetCharacter(TRIM("Cep      ")),"-","")  NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Estado             ")) THEN ASSIGN ttCustomer.Estado          = oJsonObjectMain:GetCharacter (TRIM("Estado          "))          NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Cidade             ")) THEN ASSIGN ttCustomer.Cidade          = oJsonObjectMain:GetCharacter (TRIM("Cidade          "))          NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Pais               ")) THEN ASSIGN ttCustomer.Pais            = oJsonObjectMain:GetCharacter (TRIM("Pais            "))          NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("SocialReason   ")) THEN ASSIGN ttCustomer.RazaoSocial     = oJsonObjectMain:GetCharacter(TRIM("SocialReason  "))          NO-ERROR. 
+    IF oJsonObjectMain:Has(TRIM("CNPJ           ")) THEN ASSIGN ttCustomer.CNPJ            = oJsonObjectMain:GetCharacter(TRIM("CNPJ          "))          NO-ERROR. 
+    IF oJsonObjectMain:Has(TRIM("IE             ")) THEN ASSIGN ttCustomer.IE              = oJsonObjectMain:GetCharacter(TRIM("IE            "))          NO-ERROR. 
+    IF oJsonObjectMain:Has(TRIM("Email          ")) THEN ASSIGN ttCustomer.Email           = oJsonObjectMain:GetCharacter(TRIM("Email         "))          NO-ERROR. 
+    IF oJsonObjectMain:Has(TRIM("Phone          ")) THEN ASSIGN ttCustomer.Telefone        = oJsonObjectMain:GetCharacter(TRIM("Phone         "))          NO-ERROR.    
+    IF oJsonObjectMain:Has(TRIM("InscMunicipal  ")) THEN ASSIGN ttCustomer.InscMunicipal   = oJsonObjectMain:GetCharacter(TRIM("InscMunicipal "))          NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("Address        ")) THEN ASSIGN ttCustomer.Endereco        = oJsonObjectMain:GetCharacter (TRIM("Address      "))          NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("Neighborhood   ")) THEN ASSIGN ttCustomer.Bairro          = oJsonObjectMain:GetCharacter (TRIM("Neighborhood "))          NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("Zip            ")) THEN ASSIGN ttCustomer.Cep             = REPLACE(oJsonObjectMain:GetCharacter(TRIM("Zip   ")),"-","")  NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("State          ")) THEN ASSIGN ttCustomer.Estado          = oJsonObjectMain:GetCharacter (TRIM("State        "))          NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("City           ")) THEN ASSIGN ttCustomer.Cidade          = oJsonObjectMain:GetCharacter (TRIM("City         "))          NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("Country        ")) THEN ASSIGN ttCustomer.Pais            = oJsonObjectMain:GetCharacter (TRIM("Country      "))          NO-ERROR.
     
 
 
@@ -141,7 +140,6 @@ PROCEDURE pi-criaTTEmitente:
             ttCustomer.Email          skip
             ttCustomer.Telefone       skip
             ttCustomer.InscMunicipal  skip
-                                      skip
             ttCustomer.Endereco       skip
             ttCustomer.Bairro         skip
             ttCustomer.Cep            skip
@@ -150,45 +148,6 @@ PROCEDURE pi-criaTTEmitente:
             ttCustomer.Pais           SKIP(1) .       
 
 
-
-
-
-
-
-
-
-    /*--- campos nao existentes no shopify, mas necessarios para API ---*/
-    /*-- deverao ser incluidos posteriormente na tela de parametros ---
-    ASSIGN ttCustomer.LimiteCredito     = 9999999.99
-           ttCustomer.AvalicaoCredito   = 1
-           ttCustomer.TipoCredito       = 1
-           ttCustomer.DataLimiteCredito = 12/31/9999.*/
-
 END PROCEDURE.
 
 
-/*
-PROCEDURE pi-criaEndereco:
-
-    IF oJsonObjectMain:Has("EnderecoList") THEN DO:                                                                                                                                       
-        oJsonArraySec = oJsonObjectMain:GetJsonArray("EnderecoList").                                                                                                                     
-                                                                                                                                                                                            
-        DO iCountSec = 1 TO oJsonArraySec:LENGTH:                                                                                                                                           
-            oJsonObjectSec =  oJsonArraySec:GetJsonObject(iCountSec).                                                                                                                       
-                                                                                                                                                                                            
-            CREATE ttEnderecoList.                                                                                                                                                      
-                                                                                                                                                                                            
-            IF oJsonObjectSec:Has(TRIM("Bairro      ")) THEN ASSIGN ttEnderecoList.Bairro        = oJsonObjectSec:GetCharacter (TRIM("Bairro              "))          NO-ERROR.  
-            IF oJsonObjectSec:Has(TRIM("Cep         ")) THEN ASSIGN ttEnderecoList.Cep           = REPLACE(oJsonObjectSec:GetCharacter(TRIM("Cep          ")),"-","")  NO-ERROR.  
-            IF oJsonObjectSec:Has(TRIM("Estado      ")) THEN ASSIGN ttEnderecoList.Estado        = oJsonObjectSec:GetCharacter (TRIM("Estado              "))          NO-ERROR.  
-            IF oJsonObjectSec:Has(TRIM("Cidade      ")) THEN ASSIGN ttEnderecoList.Cidade        = oJsonObjectSec:GetCharacter (TRIM("Cidade              "))          NO-ERROR.  
-            IF oJsonObjectSec:Has(TRIM("Pais        ")) THEN ASSIGN ttEnderecoList.Pais          = oJsonObjectSec:GetCharacter (TRIM("Pais                "))          NO-ERROR.  
-            IF oJsonObjectSec:Has(TRIM("Complemento ")) THEN ASSIGN ttEnderecoList.Complemento   = oJsonObjectSec:GetCharacter (TRIM("Complemento         "))          NO-ERROR.  
-            IF oJsonObjectSec:Has(TRIM("Logradouro  ")) THEN ASSIGN ttEnderecoList.Logradouro    = oJsonObjectSec:GetCharacter (TRIM("Logradouro          "))          NO-ERROR.  
-            IF oJsonObjectSec:Has(TRIM("Padrao      ")) THEN ASSIGN ttEnderecoList.Padrao        = oJsonObjectSec:GetCharacter (TRIM("Padrao              "))          NO-ERROR.  
-        END.                                                                                                                                                                               
-                                                                                                                                                                                            
-    END.    
-
-END PROCEDURE.
-*/
