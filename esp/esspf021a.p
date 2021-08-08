@@ -44,6 +44,7 @@ DEFINE VARIABLE c-cep           LIKE emitente.cep  NO-UNDO.
 DEFINE VARIABLE c-rua           AS CHAR            NO-UNDO.
 DEFINE VARIABLE c-nro           AS CHAR            NO-UNDO.
 DEFINE VARIABLE c-comp          AS CHAR            NO-UNDO.
+DEFINE VARIABLE iGrupoCli       AS INTEGER         NO-UNDO.
 
 
 /* --------------------------------------------------------------------------------------------
@@ -195,6 +196,12 @@ PROCEDURE piCriaCliente:
       /*-- recupera o c¢digo do cliente --*/
       RUN cdp/cd9960.p (OUTPUT iCodEmitente).
 
+      if (fnNatureza(ttCustomer.cnpj) = 1) THEN
+         ASSIGN iGrupoCli = es-api-param-cliente-spf.cod-gr-cli-fisica.
+      else
+      ASSIGN iGrupoCli = es-api-param-cliente-spf.cod-gr-cli.
+
+
       CREATE tt-emitente.
       ASSIGN tt-emitente.cod-emitente                = iCodEmitente
             tt-emitente.nome-abrev                  = fnNomeAbrev(ttCustomer.RazaoSocial) //SUBSTRING(ttCustomer.cnpj,1,12)
@@ -223,7 +230,7 @@ PROCEDURE piCriaCliente:
             tt-emitente.e-mail                      = ttCustomer.email
             tt-emitente.data-implant                = TODAY
             tt-emitente.cod-rep                     = 1 /*-- incluir na tela de paramtros um campo para informar o codigo do repres*/
-            tt-emitente.Cod-gr-cli                  = es-api-param-cliente-spf.cod-gr-cli   
+            tt-emitente.Cod-gr-cli                  = iGrupoCli  
             tt-emitente.Perc-fat-ped                = es-api-param-cliente-spf.perc-fat-ped 
             tt-emitente.Portador                    = es-api-param-cliente-spf.portador    
             tt-emitente.Modalidade                  = es-api-param-cliente-spf.modalidade   
@@ -243,7 +250,8 @@ PROCEDURE piCriaCliente:
             tt-emitente.log-nf-eletro               = es-api-param-cliente-spf.log-nf-eletro 
             tt-emitente.cod-email-nfe               = es-api-param-cliente-spf.cod-email-nfe 
             tt-emitente.tp-rec-padrao               = es-api-param-cliente-spf.tp-rec-padrao 
-            tt-emitente.ins-banc                    = es-api-param-cliente-spf.ins-banc. 
+            tt-emitente.ins-banc                    = es-api-param-cliente-spf.ins-banc
+            tt-emitente.cod-canal-venda             = es-api-param-cliente-spf.cod-canal-venda.
 
 
       RUN openQuery      IN h-boad098 (INPUT 1).                                   
