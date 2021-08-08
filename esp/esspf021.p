@@ -47,7 +47,7 @@ DEFINE VARIABLE pJsonInput       AS JsonObject        NO-UNDO.
     Define input parameters
 ----------------------------------------------------------------------------------------------*/
 
-DEFINE INPUT PARAM pRowid  AS ROWID     NO-UNDO.
+DEFINE INPUT  PARAM pRowid AS ROWID     NO-UNDO.
 DEFINE OUTPUT PARAM pErro  AS CHARACTER NO-UNDO.
 DEFINE OUTPUT PARAM pChave AS CHARACTER NO-UNDO.
 
@@ -97,7 +97,10 @@ DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
 END.
 
 IF NOT TEMP-TABLE ttCustomer:HAS-RECORDS THEN
-    ASSIGN pErro = "TI - NÆo existem registros para serem processados".
+DO:
+    ASSIGN pErro = "ERRO: NÆo encontrado emitente no arquivo importado.".
+    RETURN "NOK":U.
+END.
 ELSE
 DO:
         MESSAGE "CHAMADO PROGRAM PARA CRIAR REGISTRO NO BANCO".
@@ -110,6 +113,7 @@ DO:
             FOR EACH RowErrors NO-LOCK:
                 ASSIGN pErro = pErro + " " + RowErrors.ErrorDescription.
             END.
+            RETURN "NOK":U.
         END.
 
 END.
@@ -131,8 +135,6 @@ PROCEDURE pi-criaTTEmitente:
     IF oJsonObjectMain:Has(TRIM("City           ")) THEN ASSIGN ttCustomer.Cidade          = oJsonObjectMain:GetCharacter (TRIM("City         "))          NO-ERROR.
     IF oJsonObjectMain:Has(TRIM("Country        ")) THEN ASSIGN ttCustomer.Pais            = oJsonObjectMain:GetCharacter (TRIM("Country      "))          NO-ERROR.
     
-
-
 
     MESSAGE ttCustomer.RazaoSocial    skip
             ttCustomer.CNPJ           skip

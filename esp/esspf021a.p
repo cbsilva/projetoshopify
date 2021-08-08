@@ -16,9 +16,10 @@ USING PROGRESS.Json.ObjectModel.*.
 /* --------------------------------------------------------------------------------------------
     Temp-Tables Definitions
 ----------------------------------------------------------------------------------------------*/
-{esp/esint021.i}
+{esp/esspf021.i}
 {method/dbotterr.i}
 {include/boini.i} /** tt-bo-erro **/
+{utp/utapi019.i}
 
 /* --------------------------------------------------------------------------------------------
     Global  Variable Definitions
@@ -29,14 +30,20 @@ USING PROGRESS.Json.ObjectModel.*.
 /* --------------------------------------------------------------------------------------------
     Local Variable Definitions
 ----------------------------------------------------------------------------------------------*/
-DEFINE VARIABLE cLongJson        AS LONGCHAR   NO-UNDO.
-DEFINE VARIABLE lRetJson         AS LOGICAL    NO-UNDO.
-DEFINE VARIABLE iCountMain       AS INTEGER    NO-UNDO.
-DEFINE VARIABLE iCountSec        AS INTEGER    NO-UNDO.
-DEFINE VARIABLE h-boad098        AS HANDLE     NO-UNDO.
-DEFINE VARIABLE iErro            AS INTEGER    NO-UNDO.
-DEFINE VARIABLE iCodEmitente     AS INTEGER    NO-UNDO.
-DEFINE VARIABLE rw-emitente      AS ROWID      NO-UNDO.
+DEFINE VARIABLE cLongJson       AS LONGCHAR        NO-UNDO.
+DEFINE VARIABLE lRetJson        AS LOGICAL         NO-UNDO.
+DEFINE VARIABLE iCountMain      AS INTEGER         NO-UNDO.
+DEFINE VARIABLE iCountSec       AS INTEGER         NO-UNDO.
+DEFINE VARIABLE h-boad098       AS HANDLE          NO-UNDO.
+DEFINE VARIABLE h-cdapi704      AS HANDLE          NO-UNDO.
+DEFINE VARIABLE h-cd1608        AS HANDLE          NO-UNDO.
+DEFINE VARIABLE iErro           AS INTEGER         NO-UNDO.
+DEFINE VARIABLE iCodEmitente    AS INTEGER         NO-UNDO.
+DEFINE VARIABLE rw-emitente     AS ROWID           NO-UNDO.
+DEFINE VARIABLE c-cep           LIKE emitente.cep  NO-UNDO.
+DEFINE VARIABLE c-rua           AS CHAR            NO-UNDO.
+DEFINE VARIABLE c-nro           AS CHAR            NO-UNDO.
+DEFINE VARIABLE c-comp          AS CHAR            NO-UNDO.
 
 
 /* --------------------------------------------------------------------------------------------
@@ -56,11 +63,31 @@ FUNCTION fnNatureza RETURNS INTEGER (INPUT pParam AS CHAR):
 END FUNCTION.
 
 
+FUNCTION fnNomeAbrev RETURN CHARACTER (INPUT pNome AS CHAR):
+    DEFINE VARIABLE iCount          AS INTEGER NO-UNDO.
+    DEFINE VARIABLE iniciais        AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE ultSobrenome    AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE novoNome        AS CHARACTER NO-UNDO.
+
+    ASSIGN novoNome = REPLACE(REPLACE(REPLACE(REPLACE(pNome, ' dos ', ' '), ' da ', ' '), ' de ', ' '), ' do ', ' ').
+
+    //Concatena iniciais dos nomes/sobrenomes (sem contar o £ltimo sobrenome)
+    DO iCount = 1  TO NUM-ENTRIES(novoNome, ' ') - 1:
+        ASSIGN iniciais = iniciais + SUBSTRING(ENTRY(iCount, novoNome, ' '), 1, 1).
+    END.
+
+    //Pega £ltimo sobrenome
+    ASSIGN ultSobrenome = ENTRY(NUM-ENTRIES(novoNome, ' '), novoNome, ' ').
+
+    RETURN iniciais + ' ' + ultSobrenome.
+END FUNCTION.
+
+
 /* --------------------------------------------------------------------------------------------
     Define input parameters
 ----------------------------------------------------------------------------------------------*/
 
-DEFINE INPUT  PARAM TABLE FOR ttCustomer.
+DEFINE INPUT  PARAM TABLE FOR ttCustomSer.
 DEFINE OUTPUT PARAM TABLE FOR RowErrors.
 
 
@@ -100,120 +127,152 @@ PROCEDURE piAlteraCliente:
 
     FOR FIRST emitente WHERE emitente.cgc = ttCustomer.CNPJ NO-LOCK:
 
-        ASSIGN iCodEmitente = emitente.cod-emitente.
 
-        CREATE tt-emitente.
-        BUFFER-COPY emitente TO tt-emitente
-            ASSIGN tt-emitente.nome-emit        = ttCustomer.RazaoSocial
-                   tt-emitente.Telefone         = ttCustomer.telefone      
-                   tt-emitente.e-mail           = ttCustomer.email
-                   tt-emitente.endereco         = ttCustomer.Endereco         
-                   tt-emitente.bairro           = ttCustomer.bairro           
-                   tt-emitente.cidade           = ttCustomer.cidade           
-                   tt-emitente.estado           = ttCustomer.estado           
-                   tt-emitente.pais             = ttCustomer.pais             
-                   tt-emitente.CEP              = ttCustomer.cep             
-                   tt-emitente.endereco-cob     = ttCustomer.Endereco         
-                   tt-emitente.bairro-cob       = ttCustomer.bairro           
-                   tt-emitente.cidade-cob       = ttCustomer.cidade           
-                   tt-emitente.estado-cob       = ttCustomer.estado           
-                   tt-emitente.pais-cob         = ttCustomer.pais             
-                   tt-emitente.cep-cob          = ttCustomer.cep
-                   tt-emitente.r-rowid          = ROWID(emitente).
+      ASSIGN iCodEmitente = emitente.cod-emitente.
 
-        RUN openQuery      IN h-boad098 (INPUT 1).
-        RUN validateUpdate IN h-boad098 (INPUT TABLE tt-emitente,
-                                         INPUT tt-emitente.r-rowid,
-                                         OUTPUT TABLE tt-bo-erro).
+      CREATE tt-emitente.
+      BUFFER-COPY emitente TO tt-emitente
+         ASSIGN tt-emitente.nome-emit        = ttCustomer.RazaoSocial
+                tt-emitente.Telefone         = ttCustomer.telefone      
+                tt-emitente.e-mail           = ttCustomer.email
+                tt-emitente.endereco         = ttCustomer.Endereco         
+                tt-emitente.bairro           = ttCustomer.bairro           
+                tt-emitente.cidade           = ttCustomer.cidade           
+                tt-emitente.estado           = ttCustomer.estado           
+                tt-emitente.pais             = ttCustomer.pais             
+                tt-emitente.CEP              = ttCustomer.cep             
+                tt-emitente.endereco-cob     = ttCustomer.Endereco         
+                tt-emitente.bairro-cob       = ttCustomer.bairro           
+                tt-emitente.cidade-cob       = ttCustomer.cidade           
+                tt-emitente.estado-cob       = ttCustomer.estado           
+                tt-emitente.pais-cob         = ttCustomer.pais             
+                tt-emitente.cep-cob          = ttCustomer.cep
+                tt-emitente.r-rowid          = ROWID(emitente).
 
-        IF CAN-FIND(FIRST tt-bo-erro NO-LOCK) THEN     
-        DO:                                            
-            FOR EACH tt-bo-erro NO-LOCK:               
-                RUN piErro(tt-bo-erro.mensagem,"").    
-            END.                                       
-                                                       
-                                                       
-        END.                                           
-        ELSE RUN pi-AtualizaEMS5.                      
-        
-    END.
+      RUN openQuery      IN h-boad098 (INPUT 1).
+      RUN validateUpdate IN h-boad098 (INPUT TABLE tt-emitente,
+                                       INPUT tt-emitente.r-rowid,
+                                       OUTPUT TABLE tt-bo-erro).
+
+      IF CAN-FIND(FIRST tt-bo-erro NO-LOCK) THEN     
+      DO:                                            
+         FOR EACH tt-bo-erro NO-LOCK:               
+             RUN piErro(tt-bo-erro.mensagem,"").    
+         END.  
+         RUN piEnviaNotificacaoUsuario("ERRO").                                                                                                                                               
+      END.
+      ELSE                                           
+      DO:
+         RUN pi-AtualizaEMS5.
+         IF RETURN-VALUE = "NOK" THEN 
+         DO:
+            RUN piEnviaNotificacaoUsuario("ERRO").            
+         END.
+      END.            
+   END.
+   RUN piEnviaNotificacaoUsuario("SUCESSO").
+   RETURN "OK":U. 
+   
 
 END PROCEDURE.
 
 
 PROCEDURE piCriaCliente:
 
-    /*-- recupera o c¢digo do cliente --*/
-    RUN cdp/cd9960.p (OUTPUT iCodEmitente).
+   RUN validarEmitente.
+   IF RETURN-VALUE = "NOK" THEN 
+   DO:
+      RUN piEnviaNotificacaoUsuario.
+      RETURN "NOK":U.
+   END.
 
-    CREATE tt-emitente.
-    ASSIGN tt-emitente.cod-emitente                = iCodEmitente
-           tt-emitente.nome-abrev                  = SUBSTRING(ttCustomer.cnpj,1,12)
-           tt-emitente.Nome-matriz                 = SUBSTRING(ttCustomer.cnpj,1,12)
-           tt-emitente.cgc                         = ttCustomer.cnpj
-           tt-emitente.identific                   = 1 /*-- cliente --*/
-           tt-emitente.natureza                    = fnNatureza(ttCustomer.cnpj)
-           tt-emitente.nome-emit                   = ttCustomer.RazaoSocial
-           tt-emitente.endereco                    = ttCustomer.Endereco
-           tt-emitente.bairro                      = ttCustomer.bairro
-           tt-emitente.cidade                      = ttCustomer.cidade
-           tt-emitente.estado                      = ttCustomer.estado
-           tt-emitente.pais                        = ttCustomer.pais
-           tt-emitente.CEP                         = ttCustomer.cep  
-           tt-emitente.End-cobranca                = iCodEmitente
-           tt-emitente.endereco-cob                = ttCustomer.Endereco           
-           tt-emitente.bairro-cob                  = ttCustomer.bairro               
-           tt-emitente.cidade-cob                  = ttCustomer.cidade               
-           tt-emitente.estado-cob                  = ttCustomer.estado               
-           tt-emitente.pais-cob                    = ttCustomer.pais                 
-           tt-emitente.cep-cob                     = ttCustomer.cep
-           tt-emitente.Ins-estadual                = 'ISENTO'                                           
-           tt-emitente.Taxa-financ                 = 0                                                  
-           tt-emitente.Cod-transp                  = es-api-param-cliente-spf.cod-transp
-           tt-emitente.Telefone                    = ttCustomer.telefone
-           tt-emitente.e-mail                      = ttCustomer.email
-           tt-emitente.data-implant                = TODAY
-           tt-emitente.cod-rep                     = 1 /*-- incluir na tela de paramtros um campo para informar o codigo do repres*/
-           tt-emitente.Cod-gr-cli                  = es-api-param-cliente-spf.cod-gr-cli   
-           tt-emitente.Perc-fat-ped                = es-api-param-cliente-spf.perc-fat-ped 
-           tt-emitente.Portador                    = es-api-param-cliente-spf.portador    
-           tt-emitente.Modalidade                  = es-api-param-cliente-spf.modalidade   
-           tt-emitente.Ind-fat-par                 = es-api-param-cliente-spf.ind-fat-par  
-           tt-emitente.Ind-cre-cli                 = 1                                 
-           tt-emitente.Ind-apr-cred                = YES  
-           tt-emitente.Nat-operacao                = es-api-param-cliente-spf.nat-operacao 
-           tt-emitente.cod-cond-pag                = es-api-param-cliente-spf.cod-cond-pag 
-           tt-emitente.emite-bloq                  = es-api-param-cliente-spf.emite-bloq
-           tt-emitente.port-prefer                 = es-api-param-cliente-spf.port-prefer
-           tt-emitente.mod-prefer                  = es-api-param-cliente-spf.mod-prefer 
-           tt-emitente.nat-ope-ext                 = es-api-param-cliente-spf.nat-ope-ext
-           tt-emitente.esp-pd-venda                = es-api-param-cliente-spf.esp-pd-venda 
-           tt-emitente.agente-retencao             = es-api-param-cliente-spf.agente-retencao 
-           tt-emitente.log-calcula-pis-cofins-unid = es-api-param-cliente-spf.log-calcula-pis-cofins-unid
-           tt-emitente.log-optan-suspens-ipi       = es-api-param-cliente-spf.log-optan-suspens-ipi 
-           tt-emitente.log-nf-eletro               = es-api-param-cliente-spf.log-nf-eletro 
-           tt-emitente.cod-email-nfe               = es-api-param-cliente-spf.cod-email-nfe 
-           tt-emitente.tp-rec-padrao               = es-api-param-cliente-spf.tp-rec-padrao 
-           tt-emitente.ins-banc                    = es-api-param-cliente-spf.ins-banc. 
+   criaEmitente:
+   DO TRANS 
+       ON ENDKEY UNDO criaEmitente, RETURN "NOK"
+       ON ERROR  UNDO criaEmitente, RETURN "NOK"
+       ON STOP   UNDO criaEmitente, RETURN "NOK"
+
+      /*-- recupera o c¢digo do cliente --*/
+      RUN cdp/cd9960.p (OUTPUT iCodEmitente).
+
+      CREATE tt-emitente.
+      ASSIGN tt-emitente.cod-emitente                = iCodEmitente
+            tt-emitente.nome-abrev                  = fnNomeAbrev(ttCustomer.RazaoSocial) //SUBSTRING(ttCustomer.cnpj,1,12)
+            tt-emitente.Nome-matriz                 = fnNomeAbrev(ttCustomer.RazaoSocial)
+            tt-emitente.cgc                         = ttCustomer.cnpj
+            tt-emitente.identific                   = 1 /*-- cliente --*/
+            tt-emitente.natureza                    = fnNatureza(ttCustomer.cnpj)
+            tt-emitente.nome-emit                   = ttCustomer.RazaoSocial
+            tt-emitente.endereco                    = ttCustomer.Endereco
+            tt-emitente.bairro                      = ttCustomer.bairro
+            tt-emitente.cidade                      = ttCustomer.cidade
+            tt-emitente.estado                      = ttCustomer.estado
+            tt-emitente.pais                        = ttCustomer.pais
+            tt-emitente.CEP                         = ttCustomer.cep  
+            tt-emitente.End-cobranca                = iCodEmitente
+            tt-emitente.endereco-cob                = ttCustomer.Endereco           
+            tt-emitente.bairro-cob                  = ttCustomer.bairro               
+            tt-emitente.cidade-cob                  = ttCustomer.cidade               
+            tt-emitente.estado-cob                  = ttCustomer.estado               
+            tt-emitente.pais-cob                    = ttCustomer.pais                 
+            tt-emitente.cep-cob                     = ttCustomer.cep
+            tt-emitente.Ins-estadual                = 'ISENTO'                                           
+            tt-emitente.Taxa-financ                 = 0                                                  
+            tt-emitente.Cod-transp                  = es-api-param-cliente-spf.cod-transp
+            tt-emitente.Telefone                    = ttCustomer.telefone
+            tt-emitente.e-mail                      = ttCustomer.email
+            tt-emitente.data-implant                = TODAY
+            tt-emitente.cod-rep                     = 1 /*-- incluir na tela de paramtros um campo para informar o codigo do repres*/
+            tt-emitente.Cod-gr-cli                  = es-api-param-cliente-spf.cod-gr-cli   
+            tt-emitente.Perc-fat-ped                = es-api-param-cliente-spf.perc-fat-ped 
+            tt-emitente.Portador                    = es-api-param-cliente-spf.portador    
+            tt-emitente.Modalidade                  = es-api-param-cliente-spf.modalidade   
+            tt-emitente.Ind-fat-par                 = es-api-param-cliente-spf.ind-fat-par  
+            tt-emitente.Ind-cre-cli                 = 1                                 
+            tt-emitente.Ind-apr-cred                = YES  
+            tt-emitente.Nat-operacao                = es-api-param-cliente-spf.nat-operacao 
+            tt-emitente.cod-cond-pag                = es-api-param-cliente-spf.cod-cond-pag 
+            tt-emitente.emite-bloq                  = es-api-param-cliente-spf.emite-bloq
+            tt-emitente.port-prefer                 = es-api-param-cliente-spf.port-prefer
+            tt-emitente.mod-prefer                  = es-api-param-cliente-spf.mod-prefer 
+            tt-emitente.nat-ope-ext                 = es-api-param-cliente-spf.nat-ope-ext
+            tt-emitente.esp-pd-venda                = es-api-param-cliente-spf.esp-pd-venda 
+            tt-emitente.agente-retencao             = es-api-param-cliente-spf.agente-retencao 
+            tt-emitente.log-calcula-pis-cofins-unid = es-api-param-cliente-spf.log-calcula-pis-cofins-unid
+            tt-emitente.log-optan-suspens-ipi       = es-api-param-cliente-spf.log-optan-suspens-ipi 
+            tt-emitente.log-nf-eletro               = es-api-param-cliente-spf.log-nf-eletro 
+            tt-emitente.cod-email-nfe               = es-api-param-cliente-spf.cod-email-nfe 
+            tt-emitente.tp-rec-padrao               = es-api-param-cliente-spf.tp-rec-padrao 
+            tt-emitente.ins-banc                    = es-api-param-cliente-spf.ins-banc. 
 
 
+      RUN openQuery      IN h-boad098 (INPUT 1).                                   
+      RUN validateCreate IN h-boad098 (INPUT TABLE tt-emitente,                                                       
+                                      OUTPUT TABLE tt-bo-erro,
+                                      OUTPUT rw-emitente).
 
 
-    RUN openQuery      IN h-boad098 (INPUT 1).                                   
-    RUN validateCreate IN h-boad098 (INPUT TABLE tt-emitente,                                                       
-                                     OUTPUT TABLE tt-bo-erro,
-                                     OUTPUT rw-emitente).
-
-
-    IF CAN-FIND(FIRST tt-bo-erro NO-LOCK) THEN 
-    DO:
-        FOR EACH tt-bo-erro NO-LOCK:
-            RUN piErro(tt-bo-erro.mensagem,"").
-        END.
-    
-        
-    END.
-    ELSE RUN pi-AtualizaEMS5.
+      IF CAN-FIND(FIRST tt-bo-erro NO-LOCK) THEN 
+      DO:
+          FOR EACH tt-bo-erro NO-LOCK:
+              RUN piErro(tt-bo-erro.mensagem,"").
+          END.
+          RUN piEnviaNotificacaoUsuario(INPUT "ERRO", ROWID(ttCustomer)).
+          UNDO criaEmitente, RETURN "NOK":U.         
+      END.
+      ELSE 
+      DO:
+         RUN pi-AtualizaEMS5.
+         IF RETURN-VALUE = "NOK" THEN 
+         DO:
+            RUN piEnviaNotificacaoUsuario(INPUT "ERRO", ROWID(ttCustomer)).
+            UNDO criaEmitente, RETURN "NOK":U.  
+         END.
+      END.   
+     
+   END.
+   RUN piEnviaNotificacaoUsuario(INPUT "SUCESSO", ROWID(ttCustomer)).
+   RETURN "OK":U. 
 
 
 END PROCEDURE.
@@ -228,16 +287,23 @@ PROCEDURE pi-AtualizaEMS5:
        FIND FIRST param-global NO-LOCK NO-ERROR.                 
        IF  param-global.log-2 = YES THEN DO:                     
            VALIDATE emitente NO-ERROR.                           
-           RUN cdp/cd1608.p (INPUT tt-emitente.cod-emitente,     
+           RUN cdp/cd1608.p persistent set h-cd1608  
+                            (INPUT tt-emitente.cod-emitente,     
                              INPUT tt-emitente.cod-emitente,     
                              INPUT tt-emitente.identific,        
                              INPUT YES,                          
                              INPUT 1,                            
                              INPUT 0,                            
-                             INPUT "utb765zb.tmp",               
-                             INPUT "Terminal":U,                 
-                             INPUT "").                          
-                                                                 
+                             INPUT "",               
+                             INPUT "Arquivo":U,                 
+                             INPUT "").   
+            RUN pi-erros IN h-cd1608 (OUTPUT TABLE tt-erro). 
+            DELETE PROCEDURE h-cd1608.
+
+            FOR EACH tt-erro NO-LOCK:
+               RUN piErro(tt-erro.mensagem,"").                
+            END.  
+            RETURN "NOK".                                                                                   
        END.                                                      
    END.                                                          
    /*********** Fim Integracao 2.00 X 5.00 ****************/ 
@@ -259,3 +325,147 @@ PROCEDURE piErro:
            ErrorHelp        = cErrorHelp.
 
 END PROCEDURE.
+
+
+PROCEDURE piValidaEmitente:
+
+   FIND FIRST param-global NO-LOCK NO-ERROR.
+
+   IF ttCustomer.RazaoSocial = "" THEN
+   DO:
+      RUN piErro("ERRO: Razao social n∆o informada.").
+      RETURN "NOK":U.
+   END.
+
+   IF ttCustomer.endereco = "" THEN
+   DO:
+      RUN piErro("ERRO: Endereáo informado inv†lido.").
+      RETURN "NOK":U.
+   END.
+
+   IF ttCustomer.cidade = "" THEN
+   DO:
+      RUN piErro("ERRO: Cidade n∆o informada.").
+      RETURN "NOK":U.
+   END.
+
+   FIND FIRST mguni.cidade NO-LOCK 
+        WHERE mguni.cidade.cidade = ttCustomer.cidade 
+          AND mguni.cidade.estado = ttCustomer.estado
+          AND mguni.cidade.pais   = ttCustomer.pais NO-ERROR.
+   IF NOT AVAIL mguni.cidade THEN
+   DO:
+      RUN piErro(SUBSTITUTE("ERRO: Cidade &1 informada n∆o perntece ao Pais &2/Estado &3", 
+                            ttCustomer.cidade, ttCustomer.pais, ttCustomer.estado).
+      RETURN "NOK":U.
+   END.
+
+   FIND FIRST mgcad.pais WHERE pais.nome-pais = ttCustomer.pais NO-LOCK NO-ERROR.
+   IF NOT AVAIL mgcad.pais THEN
+   DO:
+      RUN piErro(SUBSTITUTE("ERRO: Pais &1 informado n∆o cadastrado.",ttCustomer.pais).
+      RETURN "NOK":U.
+   END.
+
+   FIND FIRST mgcad.unid-feder NO-LOCK
+        WHERE unid-feder.pais = ttCustomer.pais 
+          AND unid-feder.estado = ttCustomer.estado
+   NO-ERROR.
+   IF NOT AVAIL mgcad.unid-feder THEN
+   DO:
+      RUN piErro("ERRO: Unidade de federaá∆o n∆o cadastrada.").
+      RETURN "NOK":U.
+   END.
+
+   IF LENGTH(REPLACE(ttCustomer.cep, '-', '')) <> 8 THEN DO:
+      RUN piErro("ERRO: CEP inv†lido.").
+      RETURN "NOK":U.
+  END.
+
+  IF NOT VALID-HANDLE(h-cdapi704) THEN
+      RUN cdp/cdapi704.p PERSISTENT SET h-cdapi704.
+
+   RUN pi-trata-endereco IN h-cdapi704 (INPUT ttCustomer.endereco, OUTPUT c-rua, OUTPUT c-nro, OUTPUT c-comp).
+   IF c-nro = "" THEN
+   DO:
+      RUN piErro("ERRO: Endereáo inv†lido.").
+      RETURN "NOK":U.
+   END.
+
+   IF VALID-HANDLE(h-cdapi704) THEN DO:
+      DELETE PROCEDURE h-cdapi704.
+      ASSIGN h-cdapi704 = ?.
+  END.
+END PROCEDURE.
+
+PROCEDURE piEnviaNotificacaoUsuario:
+   DEFINE INPUT PARAM pAcaoEmail  AS CHAR  NO-UNDO.
+   DEFINE INPUT PARAM rw-customer AS ROWID NO-UNDO.
+
+   DEFINE VARIABLE cMensagem   AS CHAR NO-UNDO.
+   DEFINE VARIABLE cAssunto    AS CHAR NO-UNDO.
+   DEFINE VARIABLE cDestino    AS CHAR NO-UNDO.
+   DEFINE VARIABLE cRemetente  AS CHAR NO-UNDO.
+   
+
+   run utp/utapi019.p persistent set h-utapi019.           
+   for each tt-envio2:                                     
+       delete tt-envio2.                                   
+   END.                                                    
+   for each tt-mensagem:                                   
+       delete tt-mensagem.                                 
+   END
+
+   FIND FIRST ttCustomer WHERE ROWID(ttCustomer) = rw-customer NO-LOCK NO-ERROR.
+
+   cAssunto  = "Integraá∆o de Clientes SHOPIFY".
+
+   IF pAcaoEmail = "SUCESSO" THEN
+   DO:
+      ASSIGN cMensagem = SUBSTITUTE("Prezado(s), Informo que foi registrado no CD0704, o cliente &1 - CPF/CNPJ &1",
+                         ttCustomer.RazaoSocial, ttCustomer.cnpj)
+             
+
+   END.
+   ELSE
+   DO:
+
+      ASSIGN cMensagem = SUBSTITUTE("Prezado(s), Informo que foram gerados, erros ao tentar integrar o cliente &1 - CPF/CNPJ &1, verifique o monitor de integraá∆o.", ttCustomer.RazaoSocial, ttCustomer.cnpj).
+   END.
+
+   CREATE tt-envio2.                                       
+   ASSIGN tt-envio2.versao-integracao = 1                  
+            tt-envio2.destino           = cDestino     
+            tt-envio2.remetente         = cRemetente         
+            tt-envio2.assunto           = cAssunto           
+            tt-envio2.mensagem          = cMensagem             
+            tt-envio2.importancia       = 2                  
+            tt-envio2.log-enviada       = no                 
+            tt-envio2.log-lida          = no                 
+            tt-envio2.acomp             = no                 
+            tt-envio2.formato           = "HTML"             
+            tt-envio2.arq-anexo         = "".            
+                                                            
+   CREATE tt-mensagem.                                     
+   ASSIGN tt-mensagem.seq-mensagem = 1                     
+            tt-mensagem.mensagem = cMensagem.                   
+                                                            
+   run pi-execute2 in h-utapi019 (input  table tt-envio2  ,
+                                  input  table tt-mensagem, 
+                                  output table tt-erros).
+   IF RETURN-VALUE <> "OK" THEN
+   DO:
+      DELETE PROCEDURE h-utapi019.
+
+      RUN piErro("Houver erro ao enviar notificaá‰es").
+      FOR EACH tt-erros:
+         RUN piErro(SUBSTITUTE("&1 (&2)", tt-erros.desc-erro, tratarString(STRING(tt-erros.cod-erro)) ) ).       
+      END.
+      RETURN "NOK".
+   END.
+
+   DELETE PROCEDURE h-utapi019.
+                                                         
+   RETURN "OK".
+END.
+
