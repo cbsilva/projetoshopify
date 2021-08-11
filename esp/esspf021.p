@@ -16,7 +16,7 @@ USING PROGRESS.Json.ObjectModel.*.
 /* --------------------------------------------------------------------------------------------
     Temp-Tables Definitions
 ----------------------------------------------------------------------------------------------*/
-{esp/esint021.i}
+{esp/esspf021.i}
 {method/dbotterr.i}
 
 /* --------------------------------------------------------------------------------------------
@@ -58,11 +58,11 @@ OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Shopify\logIntegr
 
 MESSAGE "inciando programa recuperacao json".
 
-FOR FIRST es-api-import-spf-spf NO-LOCK
-    WHERE ROWID(es-api-import-spf-spf) = pRowid:
+FOR FIRST es-api-import-spf NO-LOCK
+    WHERE ROWID(es-api-import-spf) = pRowid:
 END.
 
-IF NOT AVAIL es-api-import-spf-spf THEN
+IF NOT AVAIL es-api-import-spf THEN
 DO:
     ASSIGN pErro = "Registro n∆o encontrado.".
     RETURN "NOK":U.
@@ -73,7 +73,7 @@ FIX-CODEPAGE(cLongJson) = "UTF-8".
 
 MESSAGE "COPIANDO O OBJETO PARA VARIAVEL DO TIPO MEMPTR".
 
-COPY-LOB es-api-import-spf-spf.c-json TO mJson.  
+COPY-LOB es-api-import-spf.c-json TO mJson.  
 COPY-LOB mJson TO cLongJson NO-CONVERT.  
 
 MESSAGE "CRIANDO UM OBJETO DO TIPO MODEL PARSER".
@@ -104,7 +104,7 @@ END.
 ELSE
 DO:
         MESSAGE "CHAMADO PROGRAM PARA CRIAR REGISTRO NO BANCO".
-        RUN esp/esint021a.p (INPUT TABLE ttCustomer,
+        RUN esp/esspf021a.p (INPUT TABLE ttCustomer,
                              OUTPUT TABLE RowErrors).
 
 

@@ -28,3 +28,23 @@ DEFINE TEMP-TABLE ttCustomer NO-UNDO SERIALIZE-NAME "Customer"
 
 DEFINE TEMP-TABLE tt-emitente NO-UNDO LIKE emitente
     FIELD r-rowid AS ROWID.
+
+
+DEFINE TEMP-TABLE tt-erro  NO-UNDO
+   FIELD cd-erro  AS INTEGER
+   FIELD mensagem AS CHARACTER.
+
+DEFINE TEMP-TABLE tt_erros_conexao no-undo
+   field i-sequen as int             
+   field cd-erro  as int
+   field mensagem as char format "x(255)"
+   field param-1 as char
+   field param-2 as char
+   field param-3 as char
+   field param-4 as char
+   field param-5 as char
+   field param-6 as char
+   field param-7 as char
+   field param-8 as char
+   field param-9 as char.
+

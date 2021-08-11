@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------------------------/
- Programa..: esint0021.p
+ Programa..: esspf0021.p
  Objetivo..: Interface Integraá∆o Clientes SHOPIFY - Importaá∆o
  Data......: 27/07/2021
  Autor.....: 4Make Consultoria
@@ -88,7 +88,7 @@ END FUNCTION.
     Define input parameters
 ----------------------------------------------------------------------------------------------*/
 
-DEFINE INPUT  PARAM TABLE FOR ttCustomSer.
+DEFINE INPUT  PARAM TABLE FOR ttCustomer.
 DEFINE OUTPUT PARAM TABLE FOR RowErrors.
 
 
@@ -102,7 +102,7 @@ IF NOT VALID-HANDLE(h-boad098) THEN
 FIND FIRST es-api-param-cliente-spf NO-LOCK NO-ERROR.
 IF NOT AVAIL es-api-param-cliente-spf THEN
 DO:
-    RUN piErro("ParÉmetro do cliente n∆o cadastrado no ESINT016","").
+    RUN piErro("ParÉmetro do cliente n∆o cadastrado no ESSPF016").
     RETURN "NOK":U.
 END.
 
@@ -158,20 +158,20 @@ PROCEDURE piAlteraCliente:
       IF CAN-FIND(FIRST tt-bo-erro NO-LOCK) THEN     
       DO:                                            
          FOR EACH tt-bo-erro NO-LOCK:               
-             RUN piErro(tt-bo-erro.mensagem,"").    
+             RUN piErro(tt-bo-erro.mensagem).    
          END.  
-         RUN piEnviaNotificacaoUsuario("ERRO").                                                                                                                                               
+         RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").                                                                                                                                               
       END.
       ELSE                                           
       DO:
          RUN pi-AtualizaEMS5.
          IF RETURN-VALUE = "NOK" THEN 
          DO:
-            RUN piEnviaNotificacaoUsuario("ERRO").            
+            RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").          
          END.
       END.            
    END.
-   RUN piEnviaNotificacaoUsuario("SUCESSO").
+   RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Sucesso").  
    RETURN "OK":U. 
    
 
@@ -180,10 +180,10 @@ END PROCEDURE.
 
 PROCEDURE piCriaCliente:
 
-   RUN validarEmitente.
+   RUN piValidaEmitente.
    IF RETURN-VALUE = "NOK" THEN 
    DO:
-      RUN piEnviaNotificacaoUsuario.
+      RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").  
       RETURN "NOK":U.
    END.
 
@@ -191,7 +191,7 @@ PROCEDURE piCriaCliente:
    DO TRANS 
        ON ENDKEY UNDO criaEmitente, RETURN "NOK"
        ON ERROR  UNDO criaEmitente, RETURN "NOK"
-       ON STOP   UNDO criaEmitente, RETURN "NOK"
+       ON STOP   UNDO criaEmitente, RETURN "NOK":
 
       /*-- recupera o c¢digo do cliente --*/
       RUN cdp/cd9960.p (OUTPUT iCodEmitente).
@@ -263,9 +263,9 @@ PROCEDURE piCriaCliente:
       IF CAN-FIND(FIRST tt-bo-erro NO-LOCK) THEN 
       DO:
           FOR EACH tt-bo-erro NO-LOCK:
-              RUN piErro(tt-bo-erro.mensagem,"").
+              RUN piErro(tt-bo-erro.mensagem).
           END.
-          RUN piEnviaNotificacaoUsuario(INPUT "ERRO", ROWID(ttCustomer)).
+          RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").  
           UNDO criaEmitente, RETURN "NOK":U.         
       END.
       ELSE 
@@ -273,13 +273,13 @@ PROCEDURE piCriaCliente:
          RUN pi-AtualizaEMS5.
          IF RETURN-VALUE = "NOK" THEN 
          DO:
-            RUN piEnviaNotificacaoUsuario(INPUT "ERRO", ROWID(ttCustomer)).
+            RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").  
             UNDO criaEmitente, RETURN "NOK":U.  
          END.
       END.   
      
    END.
-   RUN piEnviaNotificacaoUsuario(INPUT "SUCESSO", ROWID(ttCustomer)).
+   RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Sucesso").  
    RETURN "OK":U. 
 
 
@@ -305,11 +305,11 @@ PROCEDURE pi-AtualizaEMS5:
                              INPUT "",               
                              INPUT "Arquivo":U,                 
                              INPUT "").   
-            RUN pi-erros IN h-cd1608 (OUTPUT TABLE tt-erro). 
+            RUN pi-erros IN h-cd1608 (OUTPUT TABLE tt_erros_conexao). 
             DELETE PROCEDURE h-cd1608.
 
-            FOR EACH tt-erro NO-LOCK:
-               RUN piErro(tt-erro.mensagem,"").                
+            FOR EACH tt_erros_conexao NO-LOCK:
+               RUN piErro(tt_erros_conexao.mensagem).                
             END.  
             RETURN "NOK".                                                                                   
        END.                                                      
@@ -322,7 +322,7 @@ END PROCEDURE.
 
 PROCEDURE piErro:
     DEFINE INPUT PARAM cErrorDescription   AS CHARACTER NO-UNDO.
-    DEFINE INPUT PARAM cErrorHelp          AS CHARACTER NO-UNDO.
+    
 
     CREATE RowErrors.
     ASSIGN iErro            = iErro + 1
@@ -330,7 +330,7 @@ PROCEDURE piErro:
            ErrorNumber      = 17006
            ErrorType        = "Error"
            ErrorDescription = cErrorDescription
-           ErrorHelp        = cErrorHelp.
+           ErrorHelp        = cErrorDescription.
 
 END PROCEDURE.
 
@@ -364,14 +364,14 @@ PROCEDURE piValidaEmitente:
    IF NOT AVAIL mguni.cidade THEN
    DO:
       RUN piErro(SUBSTITUTE("ERRO: Cidade &1 informada n∆o perntece ao Pais &2/Estado &3", 
-                            ttCustomer.cidade, ttCustomer.pais, ttCustomer.estado).
+                            ttCustomer.cidade, ttCustomer.pais, ttCustomer.estado)).
       RETURN "NOK":U.
    END.
 
    FIND FIRST mgcad.pais WHERE pais.nome-pais = ttCustomer.pais NO-LOCK NO-ERROR.
    IF NOT AVAIL mgcad.pais THEN
    DO:
-      RUN piErro(SUBSTITUTE("ERRO: Pais &1 informado n∆o cadastrado.",ttCustomer.pais).
+      RUN piErro(SUBSTITUTE("ERRO: Pais &1 informado n∆o cadastrado.",ttCustomer.pais)).
       RETURN "NOK":U.
    END.
 
@@ -407,8 +407,11 @@ PROCEDURE piValidaEmitente:
 END PROCEDURE.
 
 PROCEDURE piEnviaNotificacaoUsuario:
-   DEFINE INPUT PARAM pAcaoEmail  AS CHAR  NO-UNDO.
-   DEFINE INPUT PARAM rw-customer AS ROWID NO-UNDO.
+   DEFINE INPUT PARAM pRemetente  AS CHAR NO-UNDO.
+   DEFINE INPUT PARAM pDestino    AS CHAR NO-UNDO.
+   DEFINE INPUT PARAM pAcaoEmail  AS CHAR NO-UNDO.
+   
+   
 
    DEFINE VARIABLE cMensagem   AS CHAR NO-UNDO.
    DEFINE VARIABLE cAssunto    AS CHAR NO-UNDO.
@@ -422,22 +425,19 @@ PROCEDURE piEnviaNotificacaoUsuario:
    END.                                                    
    for each tt-mensagem:                                   
        delete tt-mensagem.                                 
-   END
+   END.
 
-   FIND FIRST ttCustomer WHERE ROWID(ttCustomer) = rw-customer NO-LOCK NO-ERROR.
-
-   cAssunto  = "Integraá∆o de Clientes SHOPIFY".
+   
+   ASSIGN cAssunto  = "Integraá∆o de Clientes SHOPIFY".
 
    IF pAcaoEmail = "SUCESSO" THEN
    DO:
       ASSIGN cMensagem = SUBSTITUTE("Prezado(s), Informo que foi registrado no CD0704, o cliente &1 - CPF/CNPJ &1",
-                         ttCustomer.RazaoSocial, ttCustomer.cnpj)
-             
+                         ttCustomer.RazaoSocial, ttCustomer.cnpj).            
 
    END.
    ELSE
    DO:
-
       ASSIGN cMensagem = SUBSTITUTE("Prezado(s), Informo que foram gerados, erros ao tentar integrar o cliente &1 - CPF/CNPJ &1, verifique o monitor de integraá∆o.", ttCustomer.RazaoSocial, ttCustomer.cnpj).
    END.
 
@@ -467,7 +467,7 @@ PROCEDURE piEnviaNotificacaoUsuario:
 
       RUN piErro("Houver erro ao enviar notificaá‰es").
       FOR EACH tt-erros:
-         RUN piErro(SUBSTITUTE("&1 (&2)", tt-erros.desc-erro, tratarString(STRING(tt-erros.cod-erro)) ) ).       
+         RUN piErro(SUBSTITUTE("&1 - &2", tt-erros.desc-erro)).      
       END.
       RETURN "NOK".
    END.
