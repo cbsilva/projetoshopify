@@ -19,8 +19,8 @@
 {utp/ut-api-notfound.i}
 
 
-{cdp/api/v1/apiOrder.i}
-{cdp/api/v1/apiOrderVar.i}
+{pdp/api/v1/apiOrder.i}
+{pdp/api/v1/apiOrderVar.i}
 
 /* ********************  Preprocessor Definitions  ******************** */
 
@@ -39,7 +39,7 @@ PROCEDURE pi-create:
     ASSIGN oRequestParser  = NEW JsonAPIRequestParser(jsonInput)
            jsonRecebido    = oRequestParser:getPayloadLongChar()
            i-prox-numero   = NEXT-VALUE(seq_import)
-           cCnpjCpf        = "".
+           cNrPedido       = "".
 
 
     oJsonArrayMain = jsonInput:GetJsonObject("payload":U):GetJsonArray("order":U).
@@ -48,7 +48,7 @@ PROCEDURE pi-create:
         oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
 
         IF oJsonObjectMain:Has("OrderNumber")   then do:
-            cPedidoCliente = REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("OrderNumber"),".",""),"/",""),"-","")  NO-ERROR             .
+            cNrPedido = REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("OrderNumber"),".",""),"/",""),"-","")  NO-ERROR             .
             LEAVE.
         END.
     END.
@@ -58,7 +58,7 @@ PROCEDURE pi-create:
     CREATE  es-api-import-spf.                                            
     ASSIGN  es-api-import-spf.id-movto          = i-prox-numero 
             es-api-import-spf.cd-tipo-integr    = 22 /*-- Importacao de Pedidos --*/   
-            es-api-import-spf.chave             = cPedidoCliente     
+            es-api-import-spf.chave             = cNrPedido     
             es-api-import-spf.data-movto        = NOW                     
             es-api-import-spf.data-inicio       = NOW                     
             es-api-import-spf.data-fim          = ?                       
@@ -67,7 +67,7 @@ PROCEDURE pi-create:
             es-api-import-spf.c-json            = jsonRecebido.   
 
 
-    RUN pi-gera-status (cCnpjCpf,                
+    RUN pi-gera-status (cNrPedido,                
                         "Registro em processamento",                          
                         "").                                
                                                             

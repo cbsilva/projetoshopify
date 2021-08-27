@@ -16,7 +16,7 @@ USING PROGRESS.Json.ObjectModel.*.
 /* --------------------------------------------------------------------------------------------
     Temp-Tables Definitions
 ----------------------------------------------------------------------------------------------*/
-{esp/esint021.i}
+{esp/esspf022.i}
 {method/dbotterr.i}
 
 /* --------------------------------------------------------------------------------------------
@@ -54,15 +54,15 @@ DEFINE OUTPUT PARAM pChave AS CHARACTER NO-UNDO.
 
 /******************************* Main Block **************************************************/
 
-OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Shopify\logIntegracao\esint021.log").
+OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\spf\logIntegracao\esspf022.log").
 
 MESSAGE "inciando programa recuperacao json".
 
-FOR FIRST es-api-import-spf-spf NO-LOCK
-    WHERE ROWID(es-api-import-spf-spf) = pRowid:
+FOR FIRST es-api-import-spf NO-LOCK
+    WHERE ROWID(es-api-import-spf) = pRowid:
 END.
 
-IF NOT AVAIL es-api-import-spf-spf THEN
+IF NOT AVAIL es-api-import-spf THEN
 DO:
     ASSIGN pErro = "Registro n∆o encontrado.".
     RETURN "NOK":U.
@@ -73,7 +73,7 @@ FIX-CODEPAGE(cLongJson) = "UTF-8".
 
 MESSAGE "COPIANDO O OBJETO PARA VARIAVEL DO TIPO MEMPTR".
 
-COPY-LOB es-api-import-spf-spf.c-json TO mJson.  
+COPY-LOB es-api-import-spf.c-json TO mJson.  
 COPY-LOB mJson TO cLongJson NO-CONVERT.  
 
 MESSAGE "CRIANDO UM OBJETO DO TIPO MODEL PARSER".
@@ -81,22 +81,48 @@ MESSAGE "CRIANDO UM OBJETO DO TIPO MODEL PARSER".
 
 myParser = NEW ObjectModelParser().                              
 pJsonInput = CAST(myParser:Parse(cLongJson),JsonObject).         
-oJsonArrayMain = pJsonInput:GetJsonArray("customer":U).  
+oJsonArrayMain = pJsonInput:GetJsonArray("order":U).  
 
 
 DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
 
-    CREATE ttCustomer.
+   CREATE ttPedido.
 
-    oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
+   MESSAGE 'CRIANDO TT-PEDIDO'.
 
-    MESSAGE "CHAMANDO ROTINA PARA CRIAR OS DADOS NA TEMP-TABLE".
+   oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
 
-    RUN pi-criaTTEmitente.
+   if oJsonObjectMain:Has("customerCNPJ") THEN ASSIGN ttPedido.cnpjEmitente = oJsonObjectMain:GetCharacter(TRIM("cnpjEmitente"))  NO-ERROR. 
+   if oJsonObjectMain:Has("orderNumber") THEN ASSIGN ttPedido.pedidoCliente = oJsonObjectMain:GetCharacter(TRIM("orderNumber "))  NO-ERROR. 
+
+   IF oJsonObjectMain:Has("ItemOrderList") THEN 
+   DO: 
+         MESSAGE 'LENDO OS ITENS DO PEDIDO'. 
+         oJsonArraySec = oJsonObjectMain:GetJsonArray("ItemOrderList").
+         
+         DO iCountSec = 1 TO oJsonArraySec:LENGTH:
+            oJsonObjectSec =  oJsonArraySec:GetJsonObject(iCountSec).           
+
+            CREATE ttItensPedido.
+            ASSIGN ttItensPedido.nrSeqPed = iCountSec.
+            if oJsonObjectSec:Has("ItemCodee") THEN ASSIGN	ttItensPedido.codigoItem  = oJsonObjectSec:GetCharacter("ItemCode") NO-ERROR.
+            if oJsonObjectSec:Has("Quantity" ) THEN ASSIGN	ttItensPedido.qtdPedida   = oJsonObjectSec:GetInteger("Quantity"  ) NO-ERROR.
+            if oJsonObjectSec:Has("Price"    ) THEN ASSIGN	ttItensPedido.precoUnit   = oJsonObjectSec:GetDecimal("Price"     ) NO-ERROR.
+         END.  
+
+         /* Rotina de sa°da da validaá∆o */
+         IF ERROR-STATUS:ERROR THEN DO:
+            pErro = "TI | Ocorreram erros durante o processamento: " + ERROR-STATUS:GET-MESSAGE(1).
+            RETURN "NOK".
+        END.       
+
+        RETURN "OK".      
+                
+   END.   
 
 END.
 
-IF NOT TEMP-TABLE ttCustomer:HAS-RECORDS THEN
+IF NOT TEMP-TABLE ttPedido:HAS-RECORDS THEN
 DO:
     ASSIGN pErro = "ERRO: N∆o encontrado emitente no arquivo importado.".
     RETURN "NOK":U.
@@ -104,7 +130,8 @@ END.
 ELSE
 DO:
         MESSAGE "CHAMADO PROGRAM PARA CRIAR REGISTRO NO BANCO".
-        RUN esp/esint021a.p (INPUT TABLE ttCustomer,
+        RUN esp/esspf022a.p (INPUT TABLE ttPedido,
+                             INPUT TABLE ttItensPedido,
                              OUTPUT TABLE RowErrors).
 
 
@@ -120,36 +147,5 @@ END.
 
 
 
-PROCEDURE pi-criaTTEmitente:
-
-    IF oJsonObjectMain:Has(TRIM("SocialReason   ")) THEN ASSIGN ttCustomer.RazaoSocial     = oJsonObjectMain:GetCharacter(TRIM("SocialReason  "))          NO-ERROR. 
-    IF oJsonObjectMain:Has(TRIM("CNPJ           ")) THEN ASSIGN ttCustomer.CNPJ            = oJsonObjectMain:GetCharacter(TRIM("CNPJ          "))          NO-ERROR. 
-    IF oJsonObjectMain:Has(TRIM("IE             ")) THEN ASSIGN ttCustomer.IE              = oJsonObjectMain:GetCharacter(TRIM("IE            "))          NO-ERROR. 
-    IF oJsonObjectMain:Has(TRIM("Email          ")) THEN ASSIGN ttCustomer.Email           = oJsonObjectMain:GetCharacter(TRIM("Email         "))          NO-ERROR. 
-    IF oJsonObjectMain:Has(TRIM("Phone          ")) THEN ASSIGN ttCustomer.Telefone        = oJsonObjectMain:GetCharacter(TRIM("Phone         "))          NO-ERROR.    
-    IF oJsonObjectMain:Has(TRIM("InscMunicipal  ")) THEN ASSIGN ttCustomer.InscMunicipal   = oJsonObjectMain:GetCharacter(TRIM("InscMunicipal "))          NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Address        ")) THEN ASSIGN ttCustomer.Endereco        = oJsonObjectMain:GetCharacter (TRIM("Address      "))          NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Neighborhood   ")) THEN ASSIGN ttCustomer.Bairro          = oJsonObjectMain:GetCharacter (TRIM("Neighborhood "))          NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Zip            ")) THEN ASSIGN ttCustomer.Cep             = REPLACE(oJsonObjectMain:GetCharacter(TRIM("Zip   ")),"-","")  NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("State          ")) THEN ASSIGN ttCustomer.Estado          = oJsonObjectMain:GetCharacter (TRIM("State        "))          NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("City           ")) THEN ASSIGN ttCustomer.Cidade          = oJsonObjectMain:GetCharacter (TRIM("City         "))          NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Country        ")) THEN ASSIGN ttCustomer.Pais            = oJsonObjectMain:GetCharacter (TRIM("Country      "))          NO-ERROR.
-    
-
-    MESSAGE ttCustomer.RazaoSocial    skip
-            ttCustomer.CNPJ           skip
-            ttCustomer.IE             skip
-            ttCustomer.Email          skip
-            ttCustomer.Telefone       skip
-            ttCustomer.InscMunicipal  skip
-            ttCustomer.Endereco       skip
-            ttCustomer.Bairro         skip
-            ttCustomer.Cep            skip
-            ttCustomer.Estado         skip
-            ttCustomer.Cidade         skip
-            ttCustomer.Pais           SKIP(1) .       
-
-
-END PROCEDURE.
 
 
