@@ -1,0 +1,17 @@
+{
+	"order": [{
+		"customerCNPJ": "",
+		"orderNumber": "",
+		"ItemOrderList": [{
+				"ItemCode": "",
+				"Quantity": "",
+				"Price": ""
+			},
+			{
+				"ItemCode": "",
+				"Quantity": "",
+				"Price": ""
+			}
+		]
+	}]
+}

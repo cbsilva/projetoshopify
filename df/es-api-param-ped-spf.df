@@ -1,0 +1,29 @@
+ADD TABLE "es-api-param-ped-spf"
+  AREA "Schema Area"
+  DUMP-NAME "es-api-param-ped-spf"
+
+ADD FIELD "cod-estabel" OF "es-api-param-ped-spf" AS character 
+  FORMAT "x(5)"
+  INITIAL ""
+  LABEL "Estabelecimento"
+  POSITION 23
+  MAX-WIDTH 10
+  COLUMN-LABEL "Est"
+  HELP "C¢digo do estabelecimento"
+  ORDER 10
+
+ADD FIELD "mo-codigo" OF "es-api-param-ped-spf" AS integer 
+  FORMAT ">9"
+  INITIAL "0"
+  LABEL "Moeda"
+  POSITION 24
+  MAX-WIDTH 4
+  COLUMN-LABEL "M"
+  HELP "C¢digo da moeda de referˆncia dos valores"
+  ORDER 20
+
+.
+PSC
+cpstream=ibm850
+.
+0000000547
