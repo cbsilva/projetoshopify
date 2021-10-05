@@ -95,6 +95,11 @@ DEFINE OUTPUT PARAM TABLE FOR RowErrors.
 /******************************* Main Block **************************************************/
 
 
+OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Spf\logIntegracao\esint021a.log").
+
+PUT UNFORMATTED "inciando programa para escrita no banco" SKIP.
+
+
 IF NOT VALID-HANDLE(h-boad098) THEN
     RUN adbo/boad098.p PERSISTENT SET h-boad098.
 
@@ -109,9 +114,13 @@ END.
 
 FOR FIRST ttCustomer:
 
+    PUT UNFORMATTED "Dados do cliente " + ttCustomer.CNPJ SKIP.
+
     EMPTY TEMP-TABLE tt-emitente.
 
     RUN findCGC IN h-boad098 (INPUT ttCustomer.CNPJ, OUTPUT c-return).
+
+    PUT UNFORMATTED " Cliente j  existe? "  + RETURN-VALUE SKIP.
 
     IF RETURN-VALUE = "OK" THEN 
         RUN piAlteraCliente.
@@ -119,6 +128,8 @@ FOR FIRST ttCustomer:
         RUN piCriaCliente.
 
 END.
+
+OUTPUT CLOSE.
 
 IF VALID-HANDLE(h-boad098) THEN
     DELETE PROCEDURE h-boad098.
@@ -160,18 +171,18 @@ PROCEDURE piAlteraCliente:
          FOR EACH tt-bo-erro NO-LOCK:               
              RUN piErro(tt-bo-erro.mensagem).    
          END.  
-         RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").                                                                                                                                               
+         //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").                                                                                                                                               
       END.
       ELSE                                           
       DO:
          RUN pi-AtualizaEMS5.
          IF RETURN-VALUE = "NOK" THEN 
          DO:
-            RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").          
+            //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").          
          END.
       END.            
    END.
-   RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Sucesso").  
+   //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Sucesso").  
    RETURN "OK":U. 
    
 
@@ -183,7 +194,9 @@ PROCEDURE piCriaCliente:
    RUN piValidaEmitente.
    IF RETURN-VALUE = "NOK" THEN 
    DO:
-      RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").  
+
+       PUT "OCORREU ERRO NA VALIDA€ÇO DO CLIENTE" SKIP.
+      //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").  
       RETURN "NOK":U.
    END.
 
@@ -195,6 +208,8 @@ PROCEDURE piCriaCliente:
 
       /*-- recupera o c¢digo do cliente --*/
       RUN cdp/cd9960.p (OUTPUT iCodEmitente).
+
+      PUT UNFORMATTED "NOVO EMITENTE " + string(iCodEmitente) SKIP.
 
       if (fnNatureza(ttCustomer.cnpj) = 1) THEN
          ASSIGN iGrupoCli = es-api-param-cliente-spf.cod-gr-cli-fisica.
@@ -262,6 +277,8 @@ PROCEDURE piCriaCliente:
 
       IF CAN-FIND(FIRST tt-bo-erro NO-LOCK) THEN 
       DO:
+          PUT UNFORMATTED "OCORREU ERRO NA GERA€Aå DO EMITENTE" SKIP.
+          PUT UNFORMATTED tt-bo-erro.mensagem SKIP.
           FOR EACH tt-bo-erro NO-LOCK:
               RUN piErro(tt-bo-erro.mensagem).
           END.
@@ -273,13 +290,14 @@ PROCEDURE piCriaCliente:
          RUN pi-AtualizaEMS5.
          IF RETURN-VALUE = "NOK" THEN 
          DO:
-            RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").  
-            UNDO criaEmitente, RETURN "NOK":U.  
+             PUT UNFORMATTED "OCORREU ERRO NA GERA€ÇO DO EMITENTE NO EMS5" SKIP.
+            //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").  
+            //UNDO criaEmitente, RETURN "NOK":U.  
          END.
       END.   
      
    END.
-   RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Sucesso").  
+   //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Sucesso").  
    RETURN "OK":U. 
 
 
@@ -309,6 +327,8 @@ PROCEDURE pi-AtualizaEMS5:
             DELETE PROCEDURE h-cd1608.
 
             FOR EACH tt_erros_conexao NO-LOCK:
+
+                PUT UNFORMATTED tt_erros_conexao.mensagem SKIP.
                RUN piErro(tt_erros_conexao.mensagem).                
             END.  
             RETURN "NOK".                                                                                   
@@ -418,6 +438,8 @@ PROCEDURE piEnviaNotificacaoUsuario:
    DEFINE VARIABLE cDestino    AS CHAR NO-UNDO.
    DEFINE VARIABLE cRemetente  AS CHAR NO-UNDO.
    
+   /** rotina comentada, pois em nenhum dos servidores 192.168.0.131 e 134, est  funcionando corretamente.
+   portanto esta rotina esta sendo suprimida, para garatir os testes dos demais requisitos
 
    run utp/utapi019.p persistent set h-utapi019.           
    for each tt-envio2:                                     
@@ -475,6 +497,7 @@ PROCEDURE piEnviaNotificacaoUsuario:
    END.
 
    DELETE PROCEDURE h-utapi019.
+   */
                                                          
    RETURN "OK".
 END.
