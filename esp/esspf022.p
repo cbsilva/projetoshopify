@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------------------------/
- Programa..: esint0021.p
- Objetivo..: Interface Integraá∆o Clientes SHOPIFY - Importaá∆o
+ Programa..: esint0022.p
+ Objetivo..: Interface Integraá∆o Pedidos SHOPIFY - Importaá∆o
  Data......: 27/07/2021
  Autor.....: 4Make Consultoria
  Vers∆o....: 2.000.001
@@ -22,7 +22,6 @@ USING PROGRESS.Json.ObjectModel.*.
 /* --------------------------------------------------------------------------------------------
     Global  Variable Definitions
 ----------------------------------------------------------------------------------------------*/
-
 
 
 /* --------------------------------------------------------------------------------------------
@@ -88,60 +87,78 @@ DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
 
    CREATE ttPedido.
 
-   MESSAGE 'CRIANDO TT-PEDIDO'.
-
    oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
 
-   if oJsonObjectMain:Has("customerCNPJ") THEN ASSIGN ttPedido.cnpjEmitente = oJsonObjectMain:GetCharacter(TRIM("cnpjEmitente"))  NO-ERROR. 
+   if oJsonObjectMain:Has("customerCNPJ") THEN ASSIGN ttPedido.cnpjEmitente = oJsonObjectMain:GetCharacter(TRIM("customerCNPJ"))  NO-ERROR. 
    if oJsonObjectMain:Has("orderNumber") THEN ASSIGN ttPedido.pedidoCliente = oJsonObjectMain:GetCharacter(TRIM("orderNumber "))  NO-ERROR. 
 
    IF oJsonObjectMain:Has("ItemOrderList") THEN 
    DO: 
-         MESSAGE 'LENDO OS ITENS DO PEDIDO'. 
+         
          oJsonArraySec = oJsonObjectMain:GetJsonArray("ItemOrderList").
          
          DO iCountSec = 1 TO oJsonArraySec:LENGTH:
             oJsonObjectSec =  oJsonArraySec:GetJsonObject(iCountSec).           
-
+            
             CREATE ttItensPedido.
             ASSIGN ttItensPedido.nrSeqPed = iCountSec.
-            if oJsonObjectSec:Has("ItemCodee") THEN ASSIGN	ttItensPedido.codigoItem  = oJsonObjectSec:GetCharacter("ItemCode") NO-ERROR.
+            if oJsonObjectSec:Has("ItemCode") THEN ASSIGN	ttItensPedido.codigoItem  = oJsonObjectSec:GetCharacter("ItemCode") NO-ERROR.
+            
             if oJsonObjectSec:Has("Quantity" ) THEN ASSIGN	ttItensPedido.qtdPedida   = oJsonObjectSec:GetInteger("Quantity"  ) NO-ERROR.
+            
+            
             if oJsonObjectSec:Has("Price"    ) THEN ASSIGN	ttItensPedido.precoUnit   = oJsonObjectSec:GetDecimal("Price"     ) NO-ERROR.
-         END.  
+            
 
+            
+         END.  
+         
          /* Rotina de sa°da da validaá∆o */
          IF ERROR-STATUS:ERROR THEN DO:
+         
             pErro = "TI | Ocorreram erros durante o processamento: " + ERROR-STATUS:GET-MESSAGE(1).
             RETURN "NOK".
         END.       
-
-        RETURN "OK".      
+        ELSE DO:
+        
+            IF NOT TEMP-TABLE ttPedido:HAS-RECORDS THEN
+            DO:
+            
+                ASSIGN pErro = "ERRO: N∆o encontrado emitente no arquivo importado.".
+                RETURN "NOK":U.
+                
+            END.
+            ELSE
+            DO:
+                    RUN esp/esspf022a.p (INPUT TABLE ttPedido,
+                                         INPUT TABLE ttItensPedido,
+                                         OUTPUT TABLE RowErrors).
+            
+            
+                    IF CAN-FIND(FIRST RowErrors NO-LOCK) THEN DO:
+                        FOR EACH RowErrors NO-LOCK:
+                            ASSIGN pErro = pErro + " " + RowErrors.ErrorDescription.
+                        END.
+                        RETURN "NOK":U.
+                        
+                    END.
+                    /*
+                    ELSE DO:
+                    
+                        RUN esp/esspf022efet.p (INPUT TABLE ttPedido).
+                    
+                    END.
+                    */
+            
+            END.
+            
+            
+        
+            RETURN "OK".      
+            
+        END.
                 
    END.   
-
-END.
-
-IF NOT TEMP-TABLE ttPedido:HAS-RECORDS THEN
-DO:
-    ASSIGN pErro = "ERRO: N∆o encontrado emitente no arquivo importado.".
-    RETURN "NOK":U.
-END.
-ELSE
-DO:
-        MESSAGE "CHAMADO PROGRAM PARA CRIAR REGISTRO NO BANCO".
-        RUN esp/esspf022a.p (INPUT TABLE ttPedido,
-                             INPUT TABLE ttItensPedido,
-                             OUTPUT TABLE RowErrors).
-
-
-        IF CAN-FIND(FIRST RowErrors NO-LOCK) THEN
-        DO:
-            FOR EACH RowErrors NO-LOCK:
-                ASSIGN pErro = pErro + " " + RowErrors.ErrorDescription.
-            END.
-            RETURN "NOK":U.
-        END.
 
 END.
 
