@@ -35,7 +35,7 @@ PROCEDURE pi-create:
     DEFINE INPUT  PARAMETER jsonInput  AS JsonObject NO-UNDO.
     DEFINE OUTPUT PARAMETER jsonOutput AS JsonObject NO-UNDO.
 
-    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Shopify\logIntegracao\teste.txt") APPEND.
+    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\spf\logIntegracao\CriaCliente.txt") APPEND.
         PUT UNFORMATTED "INICIO DA INTEGRACAO DE CLIENTES" SKIP.
 
     FIX-CODEPAGE(jsonRecebido) = "UTF-8".
@@ -98,7 +98,7 @@ PROCEDURE pi-update:
     DEFINE INPUT  PARAMETER jsonInput  AS JsonObject NO-UNDO.
     DEFINE OUTPUT PARAMETER jsonOutput AS JsonObject NO-UNDO.
 
-    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Shopify\logIntegracao\alteraCliente.txt").
+    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\spf\logIntegracao\alteraCliente.txt").
 
      FIX-CODEPAGE(jsonRecebido) = "UTF-8".
 
