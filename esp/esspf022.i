@@ -9,8 +9,3 @@ DEFINE TEMP-TABLE ttItensPedido NO-UNDO SERIALIZE-NAME "ItemOrderList"
    FIELD precoUnit  AS DECIMAL.
 
 
-DEFINE TEMP-TABLE tt-ped-venda NO-UNDO LIKE ped-venda
-   FIELD r-rowid AS ROWID.
-
-DEFINE TEMP-TABLE tt-ped-item NO-UNDO LIKE ped-item
-   FIELD r-rowid AS ROWID.

@@ -54,7 +54,7 @@ DEFINE OUTPUT PARAM pChave AS CHARACTER NO-UNDO.
 
 /******************************* Main Block **************************************************/
 
-OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Shopify\logIntegracao\esint021.log").
+OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Spf\logIntegracao\esint021.log").
 
 MESSAGE "inciando programa recuperacao json".
 

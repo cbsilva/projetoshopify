@@ -428,7 +428,8 @@ PROCEDURE piEnviaNotificacaoUsuario:
    END.
 
    
-   ASSIGN cAssunto  = "Integra‡Æo de Clientes SHOPIFY".
+   ASSIGN cAssunto  = "Integra‡Æo de Clientes SHOPIFY"
+          cDestino  = pDestino.
 
    IF pAcaoEmail = "SUCESSO" THEN
    DO:
@@ -453,6 +454,7 @@ PROCEDURE piEnviaNotificacaoUsuario:
             tt-envio2.acomp             = no                 
             tt-envio2.formato           = "HTML"             
             tt-envio2.arq-anexo         = "".            
+    
                                                             
    CREATE tt-mensagem.                                     
    ASSIGN tt-mensagem.seq-mensagem = 1                     
