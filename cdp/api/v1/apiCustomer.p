@@ -35,7 +35,7 @@ PROCEDURE pi-create:
     DEFINE INPUT  PARAMETER jsonInput  AS JsonObject NO-UNDO.
     DEFINE OUTPUT PARAMETER jsonOutput AS JsonObject NO-UNDO.
 
-    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Shopify\logIntegracao\teste.txt") APPEND.
+    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\spf\logIntegracao\CriaCliente.txt") APPEND.
         PUT UNFORMATTED "INICIO DA INTEGRACAO DE CLIENTES" SKIP.
 
     FIX-CODEPAGE(jsonRecebido) = "UTF-8".
@@ -59,16 +59,16 @@ PROCEDURE pi-create:
 
     MESSAGE SUBSTITUTE("PROXIMO NUMERO &1", i-prox-numero).
     
-    CREATE  es-api-import.                                            
-    ASSIGN  es-api-import.id-movto          = i-prox-numero 
-            es-api-import.cd-tipo-integr    = 21 /*-- Importacao de Clientes --*/   
-            es-api-import.chave             = cCnpjCpf     
-            es-api-import.data-movto        = NOW                     
-            es-api-import.data-inicio       = NOW                     
-            es-api-import.data-fim          = ?                       
-            es-api-import.ind-situacao      = 0 /*--- Pendente ---*/  
-            es-api-import.cod-status        = 0 /*--- sem status ---*/
-            es-api-import.c-json            = jsonRecebido.   
+    CREATE  es-api-import-spf.                                            
+    ASSIGN  es-api-import-spf.id-movto          = i-prox-numero 
+            es-api-import-spf.cd-tipo-integr    = 21 /*-- Importacao de Clientes --*/   
+            es-api-import-spf.chave             = cCnpjCpf     
+            es-api-import-spf.data-movto        = NOW                     
+            es-api-import-spf.data-inicio       = NOW                     
+            es-api-import-spf.data-fim          = ?                       
+            es-api-import-spf.ind-situacao      = 0 /*--- Pendente ---*/  
+            es-api-import-spf.cod-status        = 0 /*--- sem status ---*/
+            es-api-import-spf.c-json            = jsonRecebido.   
 
 
     RUN pi-gera-status (cCnpjCpf,                
@@ -98,7 +98,7 @@ PROCEDURE pi-update:
     DEFINE INPUT  PARAMETER jsonInput  AS JsonObject NO-UNDO.
     DEFINE OUTPUT PARAMETER jsonOutput AS JsonObject NO-UNDO.
 
-    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Shopify\logIntegracao\alteraCliente.txt").
+    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\spf\logIntegracao\alteraCliente.txt").
 
      FIX-CODEPAGE(jsonRecebido) = "UTF-8".
 
@@ -121,16 +121,16 @@ PROCEDURE pi-update:
     MESSAGE SUBSTITUTE("PROXIMO NUMERO &1", i-prox-numero).
 
     
-    CREATE  es-api-import.                                            
-    ASSIGN  es-api-import.id-movto          = i-prox-numero  
-            es-api-import.cd-tipo-integr    = 21 /*-- Importacao de Clientes --*/ 
-            es-api-import.chave             = cCnpjCpf     
-            es-api-import.data-movto        = NOW                     
-            es-api-import.data-inicio       = NOW                     
-            es-api-import.data-fim          = ?                       
-            es-api-import.ind-situacao      = 0 /*--- Pendente ---*/  
-            es-api-import.cod-status        = 0 /*--- sem status ---*/
-            es-api-import.c-json            = jsonRecebido.   
+    CREATE  es-api-import-spf.                                            
+    ASSIGN  es-api-import-spf.id-movto          = i-prox-numero  
+            es-api-import-spf.cd-tipo-integr    = 21 /*-- Importacao de Clientes --*/ 
+            es-api-import-spf.chave             = cCnpjCpf     
+            es-api-import-spf.data-movto        = NOW                     
+            es-api-import-spf.data-inicio       = NOW                     
+            es-api-import-spf.data-fim          = ?                       
+            es-api-import-spf.ind-situacao      = 0 /*--- Pendente ---*/  
+            es-api-import-spf.cod-status        = 0 /*--- sem status ---*/
+            es-api-import-spf.c-json            = jsonRecebido.   
 
 
     RUN pi-gera-status (cCnpjCpf,                

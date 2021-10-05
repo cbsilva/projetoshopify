@@ -1,0 +1,10 @@
+{
+	"payment": {
+		"customerCNPJ": "03.926.269/9360-00",
+		"orderNumber": "12345",
+		"orderValue": 99999,
+		"orderDate": "13/09/2021",
+		"paymentDate":"15/09/2021"
+		
+	}
+}

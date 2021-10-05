@@ -1,0 +1,112 @@
+ADD TABLE "doacaoPrecoMedio"
+  AREA "Schema Area"
+  DUMP-NAME "doacaoprecomedio"
+
+ADD FIELD "seqPrecoMedio" OF "doacaoPrecoMedio" AS decimal 
+  FORMAT ">>>>>>9"
+  INITIAL "0"
+  LABEL "Seq."
+  POSITION 2
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 10
+
+ADD FIELD "datEnvio" OF "doacaoPrecoMedio" AS date 
+  FORMAT "99/99/9999"
+  INITIAL ?
+  LABEL "Data Envio"
+  POSITION 3
+  MAX-WIDTH 4
+  ORDER 20
+
+ADD FIELD "it_codigo" OF "doacaoPrecoMedio" AS character 
+  FORMAT "x(16)"
+  INITIAL ""
+  LABEL "Item"
+  POSITION 4
+  MAX-WIDTH 32
+  ORDER 30
+
+ADD FIELD "valPrecoMedio" OF "doacaoPrecoMedio" AS decimal 
+  FORMAT "->>,>>>,>>9.99"
+  INITIAL "0"
+  LABEL "Pre‡o M‚dio"
+  POSITION 5
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 40
+
+ADD INDEX "pkPrecoMedio" ON "doacaoPrecoMedio" 
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "seqPrecoMedio" ASCENDING 
+
+ADD INDEX "akItemPeriodo" ON "doacaoPrecoMedio" 
+  AREA "Schema Area"
+  INDEX-FIELD "datEnvio" ASCENDING 
+  INDEX-FIELD "it_codigo" ASCENDING 
+
+ADD TABLE "es_notificacoes"
+  AREA "Schema Area"
+  DUMP-NAME "es_notificacoes"
+
+ADD FIELD "cod_mensagem" OF "es_notificacoes" AS integer 
+  FORMAT ">>>>>>>9"
+  INITIAL "0"
+  LABEL "C¢digo Mensagem"
+  POSITION 2
+  MAX-WIDTH 4
+  ORDER 10
+
+ADD FIELD "flg_comercial" OF "es_notificacoes" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Comercial"
+  POSITION 3
+  MAX-WIDTH 1
+  ORDER 20
+
+ADD FIELD "flg_financeiro" OF "es_notificacoes" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Notifica Financeiro"
+  POSITION 4
+  MAX-WIDTH 1
+  ORDER 30
+
+ADD FIELD "flg_fiscal" OF "es_notificacoes" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Notifica Fiscal"
+  POSITION 5
+  MAX-WIDTH 1
+  ORDER 40
+
+ADD FIELD "lst_mail" OF "es_notificacoes" AS character 
+  FORMAT "x(40)"
+  INITIAL ""
+  LABEL "Lista Distr."
+  POSITION 6
+  MAX-WIDTH 80
+  ORDER 50
+
+ADD FIELD "flg_logistica" OF "es_notificacoes" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Log¡stica"
+  POSITION 7
+  MAX-WIDTH 1
+  ORDER 25
+
+ADD INDEX "pk_notificacao" ON "es_notificacoes" 
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "cod_mensagem" ASCENDING 
+
+.
+PSC
+cpstream=ibm850
+.
+0000002225
