@@ -123,12 +123,13 @@ END.
 PROCEDURE pi-criaTTEmitente:
 
     IF oJsonObjectMain:Has(TRIM("SocialReason   ")) THEN ASSIGN ttCustomer.RazaoSocial     = oJsonObjectMain:GetCharacter(TRIM("SocialReason  "))          NO-ERROR. 
-    IF oJsonObjectMain:Has(TRIM("CNPJ           ")) THEN ASSIGN ttCustomer.CNPJ            = oJsonObjectMain:GetCharacter(TRIM("CNPJ          "))          NO-ERROR. 
+    IF oJsonObjectMain:Has(TRIM("customerId     ")) THEN ASSIGN ttCustomer.CNPJ            = oJsonObjectMain:GetCharacter(TRIM("customerId    "))          NO-ERROR. 
     IF oJsonObjectMain:Has(TRIM("IE             ")) THEN ASSIGN ttCustomer.IE              = oJsonObjectMain:GetCharacter(TRIM("IE            "))          NO-ERROR. 
     IF oJsonObjectMain:Has(TRIM("Email          ")) THEN ASSIGN ttCustomer.Email           = oJsonObjectMain:GetCharacter(TRIM("Email         "))          NO-ERROR. 
     IF oJsonObjectMain:Has(TRIM("Phone          ")) THEN ASSIGN ttCustomer.Telefone        = oJsonObjectMain:GetCharacter(TRIM("Phone         "))          NO-ERROR.    
     IF oJsonObjectMain:Has(TRIM("InscMunicipal  ")) THEN ASSIGN ttCustomer.InscMunicipal   = oJsonObjectMain:GetCharacter(TRIM("InscMunicipal "))          NO-ERROR.
     IF oJsonObjectMain:Has(TRIM("Address        ")) THEN ASSIGN ttCustomer.Endereco        = oJsonObjectMain:GetCharacter (TRIM("Address      "))          NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("Complemento    ")) THEN ASSIGN ttCustomer.Complemento     = oJsonObjectMain:GetCharacter (TRIM("Complemento  "))          NO-ERROR.
     IF oJsonObjectMain:Has(TRIM("Neighborhood   ")) THEN ASSIGN ttCustomer.Bairro          = oJsonObjectMain:GetCharacter (TRIM("Neighborhood "))          NO-ERROR.
     IF oJsonObjectMain:Has(TRIM("Zip            ")) THEN ASSIGN ttCustomer.Cep             = REPLACE(oJsonObjectMain:GetCharacter(TRIM("Zip   ")),"-","")  NO-ERROR.
     IF oJsonObjectMain:Has(TRIM("State          ")) THEN ASSIGN ttCustomer.Estado          = oJsonObjectMain:GetCharacter (TRIM("State        "))          NO-ERROR.
@@ -143,6 +144,7 @@ PROCEDURE pi-criaTTEmitente:
             ttCustomer.Telefone       skip
             ttCustomer.InscMunicipal  skip
             ttCustomer.Endereco       skip
+            ttCustomer.Complemento    SKIP
             ttCustomer.Bairro         skip
             ttCustomer.Cep            skip
             ttCustomer.Estado         skip

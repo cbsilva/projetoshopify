@@ -51,8 +51,8 @@ PROCEDURE pi-create:
     DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
         oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
 
-        IF oJsonObjectMain:Has("CNPJ")   then do:
-            cCnpjCpf = REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("CNPJ"),".",""),"/",""),"-","")  NO-ERROR             .
+        IF oJsonObjectMain:Has("customerId")   then do:
+            cCnpjCpf = REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("customerId"),".",""),"/",""),"-","")  NO-ERROR             .
             LEAVE.
         END.
     END.
@@ -72,7 +72,7 @@ PROCEDURE pi-create:
 
 
     RUN pi-gera-status (cCnpjCpf,                
-                        "Registro em processamento",                          
+                        "Success OK",                          
                         "").                                
                                                             
     /* -------- Grava retorno ------*/                      
@@ -112,8 +112,8 @@ PROCEDURE pi-update:
     DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
         oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
 
-        IF oJsonObjectMain:Has("CNPJ")                   then do:
-            cCnpjCpf = REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("CNPJ"),".",""),"/",""),"-","")  NO-ERROR             .
+        IF oJsonObjectMain:Has("customerId")                   then do:
+            cCnpjCpf = REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("customerId"),".",""),"/",""),"-","")  NO-ERROR             .
             LEAVE.
         END.
     END.
@@ -134,7 +134,7 @@ PROCEDURE pi-update:
 
 
     RUN pi-gera-status (cCnpjCpf,                
-                        "Registro em processamento",                          
+                        "Success OK",                          
                         "").                                
                                                             
     /* -------- Grava retorno ------*/                      
