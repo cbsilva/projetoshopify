@@ -1,0 +1,168 @@
+/*----------------------------------------------------------------------------------------------
+    File        : esspf024.p
+    Purpose     : Interface de Integraá∆o TOTVS Notas TOTVS x Shopify
+    Description : Envio de informacoes da nota para shopify
+    Author(s)   : 4Make Consultoria
+    Created     : 18.10.2021
+    Notes       :
+-----------------------------------------------------------------------------------------------*/
+
+/******************************* Definitions **************************************************/
+
+
+/* --------------------------------------------------------------------------------------------
+    Import Objects - JSON Definitions
+----------------------------------------------------------------------------------------------*/
+using Progress.Json.OBJECTModel.JsonOBJECT.
+using Progress.Json.OBJECTModel.JsonArray.
+
+/* --------------------------------------------------------------------------------------------
+    Define input param
+----------------------------------------------------------------------------------------------*/
+DEFINE INPUT  PARAMETER r-table AS ROWID     NO-UNDO.
+DEFINE OUTPUT PARAMETER c-erro  AS CHARACTER NO-UNDO.
+DEFINE OUTPUT PARAMETER c-chave AS CHARACTER NO-UNDO.
+
+/* --------------------------------------------------------------------------------------------
+    Local Variable Definitions
+----------------------------------------------------------------------------------------------*/
+DEFINE VARIABLE oJsonArray       AS JsonArray   NO-UNDO.
+DEFINE VARIABLE oJsonObject      AS JsonObject  NO-UNDO.
+DEFINE VARIABLE oJsonObjMain     AS JsonObject  NO-UNDO.
+DEFINE VARIABLE oJsonObjIni      AS jsonObject  NO-UNDO.
+DEFINE VARIABLE ojsonArrayIni    AS JsonArray   NO-UNDO.
+DEFINE VARIABLE hAPI             AS HANDLE      NO-UNDO.
+DEFINE VARIABLE hTempNota        AS HANDLE      NO-UNDO.
+DEFINE VARIABLE cJsonBody        AS LONGCHAR    NO-UNDO.
+DEFINE VARIABLE cRetorno         AS CHARACTER   NO-UNDO.
+DEFINE VARIABLE lResp            AS LOGICAL     NO-UNDO.
+
+/* --------------------------------------------------------------------------------------------
+    Temp-Tables Definitions
+----------------------------------------------------------------------------------------------*/
+{METHOD/dbotterr.i} //RowErrors
+
+DEFINE TEMP-TABLE tt-erro NO-UNDO
+      FIELD cd-erro AS INTEGER 
+      FIELD mensagem AS CHARACTER.
+
+/* --------------------------------------------------------------------------------------------
+    Functions
+----------------------------------------------------------------------------------------------*/
+
+
+
+/******************************* Main Block **************************************************/
+
+/*-- instancia hApi de comunicao --*/
+IF NOT VALID-HANDLE(hAPI) THEN
+DO :
+    RUN esp/esspf200.p PERSISTENT SET hAPI.
+    IF ERROR-STATUS:ERROR THEN 
+    DO:
+        ASSIGN c-erro = ERROR-STATUS:GET-MESSAGE(1).
+        RUN pi-deleta-objetos.
+        RETURN "NOK".
+    END.
+END.
+
+/*-- cria objeto principal oJsonObjMain --*/
+RUN piGeraObjJson IN hAPI (OUTPUT oJsonObjMain).
+IF ERROR-STATUS:ERROR THEN DO:
+    ASSIGN c-erro = ERROR-STATUS:GET-MESSAGE(1).
+    RUN pi-deleta-objetos.
+    RETURN "NOK".
+END.
+
+FOR FIRST es-api-export-spf WHERE ROWID(es-api-export-spf) = r-table NO-LOCK: END.
+IF NOT AVAIL es-api-export-spf THEN
+DO:
+    ASSIGN c-erro = "Registro Tabela de Nota Fiscal n∆o localizado".
+    RUN pi-deleta-objetos.
+    RETURN "NOK".
+END.
+
+FOR FIRST es-api-param-spf NO-LOCK
+    WHERE es-api-param-spf.ind-tipo-trans = es-api-export-spf.ind-tipo-trans
+      AND es-api-param-spf.cd-tipo-integr = ea-api-export-spf.cd-tipo-integr: 
+END.
+IF NOT AVAIL es-api-param-spf THEN
+DO:
+    ASSIGN c-erro = SUBSTITUTE("Tipo de Integraá∆o &1 n∆o Encontrada", es-api-export-spf.cd-tipo-integr).
+    RETURN "NOK":U.
+END.
+
+
+RUN piGravaTTNotas (OUTPUT hTempNota, OUTPUT c-erro).
+IF VALID-HANDLE(hTempNota) THEN DO:
+
+    /* ------ Adiciona Array -----*/
+    RUN piCriaObj IN hAPI (INPUT hTempNota,
+                           OUTPUT ojsonObjIni,
+                           OUTPUT ojsonArrayIni,
+                           INPUT YES) NO-ERROR.
+    IF ERROR-STATUS:ERROR THEN DO:
+        ASSIGN c-erro = ERROR-STATUS:GET-MESSAGE(1).
+        RUN pi-deleta-objetos.
+        RETURN "NOK".
+    END.
+
+    IF VALID-HANDLE(hTempNota) THEN DELETE OBJECT hTempNota.
+END.
+
+
+/* ----- Cria Json Principal ------- */
+oJsonArrayMain = NEW JsonArray().
+oJsonArrayMain:ADD(ojsonObjIni). 
+
+/* ------ Grava conteudo do Json em variavel -----*/
+RUN piGeraVarJson IN hAPI (INPUT oJsonObjMain,OUTPUT cJsonBody) NO-ERROR.
+IF ERROR-STATUS:ERROR THEN DO:
+    ASSIGN c-erro = ERROR-STATUS:GET-MESSAGE(1).
+    RUN pi-deleta-objetos.
+    RETURN "NOK".
+END.
+
+FIND CURRENT es-api-export-spf EXCLUSIVE-LOCK NO-ERROR.
+ASSIGN es-api-export-spf.c-json = cJsonBody.
+FIND CURRENT es-api-export-spf NO-LOCK NO-ERROR.
+
+
+RUN piPostJsonObj IN hAPI (INPUT oJsonObjMain,            
+                           INPUT rowid(es-api-param-spf),    
+                           OUTPUT lResp,                 
+                           OUTPUT TABLE RowErrors,       
+                           OUTPUT cRetorno). 
+
+
+IF TEMP-TABLE RowErrors:HAS-RECORDS THEN 
+DO:
+    FOR EACH RowErrors NO-LOCK:
+        ASSIGN c-erro = c-erro + string(RowErrors.ErrorNumber)  + " - " + RowErrors.ErrorDescription.
+    END.
+    RUN pi-deleta-objetos.    
+    RETURN "NOK".
+END.
+
+
+
+
+
+
+
+
+
+
+
+
+PROCEDURE pi-deleta-objetos:
+
+    IF VALID-HANDLE(hAPI) THEN DO:
+        DELETE OBJECT hAPI.
+        ASSIGN hAPI = ?.
+    END.  
+    IF VALID-OBJECT(oJsonArrayMain) THEN 
+        DELETE OBJECT oJsonArrayMain  NO-ERROR.
+
+END PROCEDURE.
+
