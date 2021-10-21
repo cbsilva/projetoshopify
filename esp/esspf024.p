@@ -1,3 +1,4 @@
+
 /*----------------------------------------------------------------------------------------------
     File        : esspf024.p
     Purpose     : Interface de Integra‡Æo TOTVS Notas TOTVS x Shopify
@@ -26,7 +27,7 @@ DEFINE OUTPUT PARAMETER c-chave AS CHARACTER NO-UNDO.
 /* --------------------------------------------------------------------------------------------
     Local Variable Definitions
 ----------------------------------------------------------------------------------------------*/
-DEFINE VARIABLE oJsonArray       AS JsonArray   NO-UNDO.
+DEFINE VARIABLE oJsonArrayMain   AS JsonArray   NO-UNDO.
 DEFINE VARIABLE oJsonObject      AS JsonObject  NO-UNDO.
 DEFINE VARIABLE oJsonObjMain     AS JsonObject  NO-UNDO.
 DEFINE VARIABLE oJsonObjIni      AS jsonObject  NO-UNDO.
@@ -42,9 +43,14 @@ DEFINE VARIABLE lResp            AS LOGICAL     NO-UNDO.
 ----------------------------------------------------------------------------------------------*/
 {METHOD/dbotterr.i} //RowErrors
 
-DEFINE TEMP-TABLE tt-erro NO-UNDO
-      FIELD cd-erro AS INTEGER 
-      FIELD mensagem AS CHARACTER.
+DEFINE TEMP-TABLE ttNota NO-UNDO
+    FIELD orderId       AS CHARACTER SERIALIZE-NAME "orderid"
+    FIELD storeName     AS CHARACTER SERIALIZE-NAME "store_name"
+    FIELD totvsInvoice  AS CHARACTER SERIALIZE-NAME "totvs_invoice_id".
+
+/* DEFINE TEMP-TABLE tt-erro NO-UNDO  */
+/*       FIELD cd-erro AS INTEGER     */
+/*       FIELD mensagem AS CHARACTER. */
 
 /* --------------------------------------------------------------------------------------------
     Functions
@@ -83,8 +89,8 @@ DO:
 END.
 
 FOR FIRST es-api-param-spf NO-LOCK
-    WHERE es-api-param-spf.ind-tipo-trans = es-api-export-spf.ind-tipo-trans
-      AND es-api-param-spf.cd-tipo-integr = ea-api-export-spf.cd-tipo-integr: 
+    WHERE es-api-param-spf.ind-tipo-trans = 2 /*exportacao*/
+      AND es-api-param-spf.cd-tipo-integr = es-api-export-spf.cd-tipo-integr: 
 END.
 IF NOT AVAIL es-api-param-spf THEN
 DO:
@@ -146,13 +152,41 @@ END.
 
 
 
+/* --------------------------------------------------------------------------------------------
+    Procedures
+----------------------------------------------------------------------------------------------*/
+
+PROCEDURE piGravaTTNotas:
+    DEFINE OUTPUT PARAM pTempNota AS HANDLE    NO-UNDO.
+    DEFINE OUTPUT PARAM pErro     AS CHARACTER NO-UNDO.
+
+    FOR FIRST es-ped-venda-spf NO-LOCK
+        WHERE es-ped-venda-spf.nr-shopify = es-api-export-spf.chave ,
+        FIRST ped-venda NO-LOCK
+        WHERE ped-venda.nome-abrev = es-ped-venda-spf.nome-abrev
+          AND ped-venda.nr-pedcli  = es-ped-venda-spf.nr-pedcli:
 
 
+        FIND FIRST nota-fiscal
+             WHERE nota-fiscal.nr-pedcli   = ped-venda.nr-pedcli
+               AND nota-fiscal.nome-ab-cli = ped-venda.nome-abrev NO-LOCK NO-ERROR.
+        IF NOT AVAIL nota-fiscal THEN
+        DO:
+            ASSIGN pErro = SUBSTITUTE("NÆo Encontado Nota Fiscal, para Pedido de Venda &1/&2",ped-venda.nome-abrev,ped-venda.nr-pedcli).
+            RETURN "NOK":U.
+        END.
 
+        CREATE ttNota.
+        ASSIGN ttNota.orderid      = es-ped-venda-spf.nr-shopify
+               ttNota.storeName    = "TEST"
+               ttNota.totvsInvoice = nota-fiscal.nr-nota-fis.
 
+    END.
 
+    IF TEMP-TABLE ttNota:HAS-RECORDS THEN
+        pTempNota = BUFFER ttNota:HANDLE.
 
-
+END PROCEDURE.
 
 
 PROCEDURE pi-deleta-objetos:
