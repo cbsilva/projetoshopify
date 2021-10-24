@@ -178,9 +178,9 @@ PROCEDURE piPostJsonObj:
 /*-----------------------------------------------------------
   Prop¢sito: M‚todo para envio de conteudo json 
  ------------------------------------------------------------*/
-    DEF INPUT  PARAM oInputData       AS JsonObject NO-UNDO.
-    DEF INPUT  PARAM pRowidParam      AS ROWID      NO-UNDO.
-    DEF OUTPUT PARAM TABLE FOR RowErrors.
+    DEFINE INPUT  PARAM oInputData     AS JsonObject NO-UNDO.
+    DEFINE INPUT PARAM pRowid AS ROWID NO-UNDO.
+    DEFINE OUTPUT PARAM TABLE FOR RowErrors.
     
     DEFINE VARIABLE oRequest         as IHttpRequest                         NO-UNDO.
     DEFINE VARIABLE oResponse        as IHttpResponse                        NO-UNDO.
@@ -197,19 +197,25 @@ PROCEDURE piPostJsonObj:
     DEFINE VARIABLE cToken           AS CHARACTER                            NO-UNDO.
     DEFINE VARIABLE client           AS COM-HANDLE                           NO-UNDO.
     DEFINE VARIABLE cServerName      AS CHARACTER                            NO-UNDO.
-    
-    FIND es-api-param-spf WHERE ROWID(es-api-param-spf) = pRowidParam NO-LOCK NO-ERROR.
+
+
+    FIND FIRST es-api-param-spf WHERE ROWID(es-api-param-spf) = pRowid NO-LOCK NO-ERROR.
     IF NOT AVAIL es-api-param-spf THEN
     DO:
         RUN piErro("Tipo de Integra‡Æo Inexistente.").
-        RETURN "NOK".
+        RETURN "NOK":U.
     END.
 
-    FIND FIRST es-api-token-param-spf NO-LOCK WHERE es-api-token-param-spf.cod-sistema = es-api-param-spf.cd-sistema NO-ERROR.
+    MESSAGE "##API" es-api-param-spf.cd-tipo-integr
+        VIEW-AS ALERT-BOX INFORMATION BUTTONS OK.
+    
+    FIND FIRST es-api-token-param-spf  
+         WHERE es-api-token-param-spf.cod-sistema = es-api-param-spf.cd-sistema 
+    NO-LOCK NO-ERROR.
     IF NOT AVAIL es-api-token-param-spf THEN
     DO:
         RUN piErro("Login de integra‡Æo nÆo informado.").
-        RETURN "NOK".
+        RETURN "NOK":U.
     END.
 
     ASSIGN cHttpUrl    = es-api-param-spf.host-integr
@@ -224,9 +230,9 @@ PROCEDURE piPostJsonObj:
 
 
     /*-- Quando informado porta no esspf004, ‚ acrescentado no parametro --*/
-    IF es-api-param.porta-integr > 0 THEN ASSIGN cHttpUrl = cHttpUrl + ":" +  STRING(es-api-param.porta-integr).
+    IF es-api-param-spf.porta-integr > 0 THEN ASSIGN cHttpUrl = cHttpUrl + ":" +  STRING(es-api-param-spf.porta-integr).
 
-    ASSIGN cHttpUrl = cHttpUrl + es-api-param.path-integr.
+    ASSIGN cHttpUrl = cHttpUrl + es-api-param-spf.path-integr.
 
     oCredentials = new Credentials('Authorization', es-api-token-param-spf.cod-usuario, es-api-token-param-spf.cod-senha ).   
     oLib         = ClientLibraryBuilder:Build()
@@ -243,7 +249,7 @@ PROCEDURE piPostJsonObj:
     
     IF ERROR-STATUS:ERROR THEN DO:
         RUN piErro ("Ocorreram erros no envio do Json - " + STRING(ERROR-STATUS:GET-MESSAGE(1)), "" ).
-        RETURN "NOK".            
+        RETURN "NOK":U.            
     END.
 
     IF oResponse:StatusCode < 200 OR oResponse:StatusCode > 299 THEN DO:
@@ -251,8 +257,10 @@ PROCEDURE piPostJsonObj:
                     STRING(oResponse:statusCode)          + 
                     " - " + 
                     STRING(oResponse:StatusReason),"").
-        RETURN "NOK".
+        RETURN "NOK":U.
     END.
+
+    
 
 
 END PROCEDURE.

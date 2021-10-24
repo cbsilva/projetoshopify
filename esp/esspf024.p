@@ -22,7 +22,7 @@ using Progress.Json.OBJECTModel.JsonArray.
 ----------------------------------------------------------------------------------------------*/
 DEFINE INPUT  PARAMETER r-table AS ROWID     NO-UNDO.
 DEFINE OUTPUT PARAMETER c-erro  AS CHARACTER NO-UNDO.
-DEFINE OUTPUT PARAMETER c-chave AS CHARACTER NO-UNDO.
+
 
 /* --------------------------------------------------------------------------------------------
     Local Variable Definitions
@@ -37,6 +37,9 @@ DEFINE VARIABLE hTempNota        AS HANDLE      NO-UNDO.
 DEFINE VARIABLE cJsonBody        AS LONGCHAR    NO-UNDO.
 DEFINE VARIABLE cRetorno         AS CHARACTER   NO-UNDO.
 DEFINE VARIABLE lResp            AS LOGICAL     NO-UNDO.
+DEFINE VARIABLE cArqLog          AS CHARACTER   NO-UNDO.
+DEFINE VARIABLE cAmbiente        AS CHARACTER 
+    EXTENT 2 INITIAL ["PROD", "TEST"] NO-UNDO.
 
 /* --------------------------------------------------------------------------------------------
     Temp-Tables Definitions
@@ -57,8 +60,9 @@ DEFINE TEMP-TABLE ttNota NO-UNDO
 ----------------------------------------------------------------------------------------------*/
 
 
-
 /******************************* Main Block **************************************************/
+
+LOG-MANAGER:WRITE-MESSAGE("ESSPF024 - PROGRAMA RETORNO INFO FATURAMENTO") NO-ERROR.
 
 /*-- instancia hApi de comunicao --*/
 IF NOT VALID-HANDLE(hAPI) THEN
@@ -68,7 +72,7 @@ DO :
     DO:
         ASSIGN c-erro = ERROR-STATUS:GET-MESSAGE(1).
         RUN pi-deleta-objetos.
-        RETURN "NOK".
+        RETURN "NOK":U.
     END.
 END.
 
@@ -77,7 +81,7 @@ RUN piGeraObjJson IN hAPI (OUTPUT oJsonObjMain).
 IF ERROR-STATUS:ERROR THEN DO:
     ASSIGN c-erro = ERROR-STATUS:GET-MESSAGE(1).
     RUN pi-deleta-objetos.
-    RETURN "NOK".
+    RETURN "NOK":U.
 END.
 
 FOR FIRST es-api-export-spf WHERE ROWID(es-api-export-spf) = r-table NO-LOCK: END.
@@ -85,7 +89,7 @@ IF NOT AVAIL es-api-export-spf THEN
 DO:
     ASSIGN c-erro = "Registro Tabela de Nota Fiscal n∆o localizado".
     RUN pi-deleta-objetos.
-    RETURN "NOK".
+    RETURN "NOK":U.
 END.
 
 FOR FIRST es-api-param-spf NO-LOCK
@@ -98,22 +102,29 @@ DO:
     RETURN "NOK":U.
 END.
 
+FIND FIRST es-api-token-param-spf NO-LOCK WHERE es-api-token-param-spf.cod-sistema = es-api-param-spf.cd-sistema NO-ERROR.
+IF NOT AVAIL es-api-token-param-spf THEN
+DO:
+    ASSIGN c-erro = "TI - Informaá‰es de TOKEN n∆o parametrizadas no programa ESSPF300.".
+    RETURN "NOK":U.
+END.
 
 RUN piGravaTTNotas (OUTPUT hTempNota, OUTPUT c-erro).
-IF VALID-HANDLE(hTempNota) THEN DO:
+IF VALID-HANDLE(hTempNota) THEN 
+DO:
 
     /* ------ Adiciona Array -----*/
     RUN piCriaObj IN hAPI (INPUT hTempNota,
-                           OUTPUT ojsonObjIni,
-                           OUTPUT ojsonArrayIni,
-                           INPUT YES) NO-ERROR.
+                           INPUT NO, /*RETORNA ARRAY DE OBJETOS*/ 
+                           OUTPUT oJsonObjMain,
+                           OUTPUT ojsonArrayIni) NO-ERROR.
     IF ERROR-STATUS:ERROR THEN DO:
         ASSIGN c-erro = ERROR-STATUS:GET-MESSAGE(1).
         RUN pi-deleta-objetos.
-        RETURN "NOK".
+        RETURN "NOK":U.
     END.
 
-    IF VALID-HANDLE(hTempNota) THEN DELETE OBJECT hTempNota.
+    DELETE OBJECT hTempNota.
 END.
 
 
@@ -123,19 +134,24 @@ oJsonArrayMain:ADD(ojsonObjIni).
 
 /* ------ Grava conteudo do Json em variavel -----*/
 RUN piGeraVarJson IN hAPI (INPUT oJsonObjMain,OUTPUT cJsonBody) NO-ERROR.
+
 IF ERROR-STATUS:ERROR THEN DO:
     ASSIGN c-erro = ERROR-STATUS:GET-MESSAGE(1).
     RUN pi-deleta-objetos.
-    RETURN "NOK".
+    RETURN "NOK":U.
 END.
 
+/* ------ Grava conteudo do Json no monitor de integracao -----*/
 FIND CURRENT es-api-export-spf EXCLUSIVE-LOCK NO-ERROR.
 ASSIGN es-api-export-spf.c-json = cJsonBody.
 FIND CURRENT es-api-export-spf NO-LOCK NO-ERROR.
 
+MESSAGE "##4" es-api-param-spf.cd-tipo-integr
+    VIEW-AS ALERT-BOX INFORMATION BUTTONS OK.
 
-RUN piPostJsonObj IN hAPI (INPUT oJsonObjMain,            
-                           INPUT ROWID(es-api-param-spf),    
+
+/* ------------ Envia Objeto Json --------- */
+RUN piPostJsonObj IN hAPI (INPUT oJsonObjMain, INPUT ROWID(es-api-param-spf),
                            OUTPUT TABLE RowErrors). 
 
 
@@ -145,8 +161,9 @@ DO:
         ASSIGN c-erro = c-erro + string(RowErrors.ErrorNumber)  + " - " + RowErrors.ErrorDescription.
     END.
     RUN pi-deleta-objetos.    
-    RETURN "NOK".
+    RETURN "NOK":U.
 END.
+
 
 
 
@@ -176,7 +193,7 @@ PROCEDURE piGravaTTNotas:
 
         CREATE ttNota.
         ASSIGN ttNota.orderid      = es-ped-venda-spf.nr-shopify
-               ttNota.storeName    = "TEST"
+               ttNota.storeName    = cAmbiente[es-api-token-param-spf.ind-tip-ambiente]
                ttNota.totvsInvoice = nota-fiscal.nr-nota-fis.
 
     END.
@@ -196,4 +213,8 @@ PROCEDURE pi-deleta-objetos:
     IF VALID-OBJECT(oJsonArrayMain) THEN 
         DELETE OBJECT oJsonArrayMain  NO-ERROR.
 
+
+    MESSAGE "Imprimindo variavel de erro" c-erro.
+    
 END PROCEDURE.
+
