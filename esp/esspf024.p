@@ -1,7 +1,7 @@
 
 /*----------------------------------------------------------------------------------------------
-    File        : esspf024.p
-    Purpose     : Interface de Integra‡Æo TOTVS Notas TOTVS x Shopify
+    File        : ESSPF024.p
+    Purpose     : Interface de Integra‡Æo TOTVS x Shopify
     Description : Envio de informacoes da nota para shopify
     Author(s)   : 4Make Consultoria
     Created     : 18.10.2021
@@ -63,7 +63,7 @@ DEFINE TEMP-TABLE ttNota NO-UNDO
 /*-- instancia hApi de comunicao --*/
 IF NOT VALID-HANDLE(hAPI) THEN
 DO :
-    RUN esp/esspf200.p PERSISTENT SET hAPI.
+    RUN esp/esspfapi200.p PERSISTENT SET hAPI.
     IF ERROR-STATUS:ERROR THEN 
     DO:
         ASSIGN c-erro = ERROR-STATUS:GET-MESSAGE(1).
@@ -135,10 +135,8 @@ FIND CURRENT es-api-export-spf NO-LOCK NO-ERROR.
 
 
 RUN piPostJsonObj IN hAPI (INPUT oJsonObjMain,            
-                           INPUT rowid(es-api-param-spf),    
-                           OUTPUT lResp,                 
-                           OUTPUT TABLE RowErrors,       
-                           OUTPUT cRetorno). 
+                           INPUT ROWID(es-api-param-spf),    
+                           OUTPUT TABLE RowErrors). 
 
 
 IF TEMP-TABLE RowErrors:HAS-RECORDS THEN 
@@ -199,4 +197,3 @@ PROCEDURE pi-deleta-objetos:
         DELETE OBJECT oJsonArrayMain  NO-ERROR.
 
 END PROCEDURE.
-
