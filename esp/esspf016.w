@@ -1,7 +1,7 @@
 &ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12 GUI ADM1
 &ANALYZE-RESUME
 /* Connected Databases 
-          mgesp            PROGRESS
+          movmac           PROGRESS
 */
 &Scoped-define WINDOW-NAME w-livre
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-livre 
@@ -13,7 +13,7 @@
 ** parcial ou total por qualquer meio, so podera ser feita mediante
 ** autorizacao expressa.
 *******************************************************************************/
-{include/i-prgvrs.i esint016 1.00.00.000}
+{include/i-prgvrs.i ESSPF016 1.00.00.000}
 
 /* Chamada a include do gerenciador de licenáas. Necessario alterar os parametros */
 /*                                                                                */
@@ -21,7 +21,7 @@
 /* <m¢dulo>:  Informar qual o m¢dulo a qual o programa pertence.                  */
 
 &IF "{&EMSFND_VERSION}" >= "1.00" &THEN
-    {include/i-license-manager.i esint016 <m¢dulo>}
+    {include/i-license-manager.i ESSPF016 <m¢dulo>}
 &ENDIF
 
 /* Create an unnamed pool to store all the widgets created 
@@ -63,13 +63,17 @@ DEFINE VARIABLE c-lista-cod-gr-c-e      AS CHARACTER   NO-UNDO.
 /* Standard List Definitions                                            */
 &Scoped-Define ENABLED-FIELDS es-api-param-cliente-spf.portador ~
 es-api-param-cliente-spf.modalidade es-api-param-cliente-spf.port-prefer ~
-es-api-param-cliente-spf.tp-rec-padrao es-api-param-cliente-spf.cod-cond-pag ~
-es-api-param-cliente-spf.cod-transp es-api-param-cliente-spf.cod-gr-cli ~
-es-api-param-cliente-spf.cod-gr-cli-fisica es-api-param-cliente-spf.cod-canal-venda ~
+es-api-param-cliente-spf.tp-rec-padrao ~
+es-api-param-cliente-spf.cod-cond-pag es-api-param-cliente-spf.cod-transp ~
+es-api-param-cliente-spf.cod-gr-cli ~
+es-api-param-cliente-spf.cod-gr-cli-fisica ~
+es-api-param-cliente-spf.cod-canal-venda ~
 es-api-param-cliente-spf.nat-operacao es-api-param-cliente-spf.perc-fat-ped ~
 es-api-param-cliente-spf.nat-ope-ext es-api-param-cliente-spf.ins-banc ~
-es-api-param-cliente-spf.mod-prefer es-api-param-cliente-spf.log-optan-suspens-ipi ~
-es-api-param-cliente-spf.emite-bloq es-api-param-cliente-spf.agente-retencao ~
+es-api-param-cliente-spf.mod-prefer ~
+es-api-param-cliente-spf.log-optan-suspens-ipi ~
+es-api-param-cliente-spf.emite-bloq ~
+es-api-param-cliente-spf.agente-retencao ~
 es-api-param-cliente-spf.ind-fat-par ~
 es-api-param-cliente-spf.log-calcula-pis-cofins-unid ~
 es-api-param-cliente-spf.log-nf-eletro es-api-param-cliente-spf.natureza ~
@@ -80,13 +84,17 @@ es-api-param-cliente-spf.esp-pd-venda
 RECT-18 RECT-22 RECT-23 RECT-24 RECT-25 
 &Scoped-Define DISPLAYED-FIELDS es-api-param-cliente-spf.portador ~
 es-api-param-cliente-spf.modalidade es-api-param-cliente-spf.port-prefer ~
-es-api-param-cliente-spf.tp-rec-padrao es-api-param-cliente-spf.cod-cond-pag ~
-es-api-param-cliente-spf.cod-transp es-api-param-cliente-spf.cod-gr-cli ~
-es-api-param-cliente-spf.cod-gr-cli-fisica es-api-param-cliente-spf.cod-canal-venda ~
+es-api-param-cliente-spf.tp-rec-padrao ~
+es-api-param-cliente-spf.cod-cond-pag es-api-param-cliente-spf.cod-transp ~
+es-api-param-cliente-spf.cod-gr-cli ~
+es-api-param-cliente-spf.cod-gr-cli-fisica ~
+es-api-param-cliente-spf.cod-canal-venda ~
 es-api-param-cliente-spf.nat-operacao es-api-param-cliente-spf.perc-fat-ped ~
 es-api-param-cliente-spf.nat-ope-ext es-api-param-cliente-spf.ins-banc ~
-es-api-param-cliente-spf.mod-prefer es-api-param-cliente-spf.log-optan-suspens-ipi ~
-es-api-param-cliente-spf.emite-bloq es-api-param-cliente-spf.agente-retencao ~
+es-api-param-cliente-spf.mod-prefer ~
+es-api-param-cliente-spf.log-optan-suspens-ipi ~
+es-api-param-cliente-spf.emite-bloq ~
+es-api-param-cliente-spf.agente-retencao ~
 es-api-param-cliente-spf.ind-fat-par ~
 es-api-param-cliente-spf.log-calcula-pis-cofins-unid ~
 es-api-param-cliente-spf.log-nf-eletro es-api-param-cliente-spf.natureza ~
@@ -228,14 +236,17 @@ DEFINE FRAME f-cad
           SIZE 6.86 BY .88
      fi-det-2 AT ROW 4 COL 32.86 COLON-ALIGNED NO-LABEL WIDGET-ID 88
      es-api-param-cliente-spf.tp-rec-padrao AT ROW 4.96 COL 25.86 COLON-ALIGNED WIDGET-ID 66
+          LABEL "Receita Padr√∆o"
           VIEW-AS FILL-IN 
           SIZE 7 BY .88
      fi-det-3 AT ROW 4.96 COL 33 COLON-ALIGNED NO-LABEL WIDGET-ID 92
      es-api-param-cliente-spf.cod-cond-pag AT ROW 5.92 COL 25.86 COLON-ALIGNED WIDGET-ID 10
+          LABEL "Condiá∆o Pagamento"
           VIEW-AS FILL-IN 
           SIZE 7 BY .88
      fi-det-4 AT ROW 5.92 COL 33 COLON-ALIGNED NO-LABEL WIDGET-ID 94
      es-api-param-cliente-spf.cod-transp AT ROW 6.88 COL 25.86 COLON-ALIGNED WIDGET-ID 14
+          LABEL "Transportador Padr∆o"
           VIEW-AS FILL-IN 
           SIZE 8 BY .88
      fi-det-5 AT ROW 6.88 COL 34 COLON-ALIGNED NO-LABEL WIDGET-ID 96
@@ -252,6 +263,7 @@ DEFINE FRAME f-cad
           SIZE 8 BY .88
      fi-det-10 AT ROW 9.67 COL 34.14 COLON-ALIGNED NO-LABEL WIDGET-ID 148
      es-api-param-cliente-spf.nat-operacao AT ROW 10.63 COL 25.86 COLON-ALIGNED WIDGET-ID 52
+          LABEL "Natureza Operaá∆o"
           VIEW-AS FILL-IN 
           SIZE 10.14 BY .88
      es-api-param-cliente-spf.perc-fat-ped AT ROW 10.63 COL 68.29 COLON-ALIGNED WIDGET-ID 60
@@ -276,12 +288,6 @@ DEFINE FRAME f-cad
 "Cheque", 8,
 "Nota Promiss¢ria", 9
           SIZE 19.72 BY 7.5
-     es-api-param-cliente-spf.log-optan-suspens-ipi AT ROW 14.79 COL 3.72 WIDGET-ID 122
-          VIEW-AS TOGGLE-BOX
-          SIZE 27 BY .83
-     es-api-param-cliente-spf.emite-bloq AT ROW 14.79 COL 46.72 WIDGET-ID 16
-          VIEW-AS TOGGLE-BOX
-          SIZE 17.72 BY .83
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
          AT COL 1 ROW 1
@@ -289,7 +295,15 @@ DEFINE FRAME f-cad
 
 /* DEFINE FRAME statement is approaching 4K Bytes.  Breaking it up   */
 DEFINE FRAME f-cad
+     es-api-param-cliente-spf.log-optan-suspens-ipi AT ROW 14.79 COL 3.72 WIDGET-ID 122
+          LABEL "Optante Suspens√∆o IPI"
+          VIEW-AS TOGGLE-BOX
+          SIZE 27 BY .83
+     es-api-param-cliente-spf.emite-bloq AT ROW 14.79 COL 46.72 WIDGET-ID 16
+          VIEW-AS TOGGLE-BOX
+          SIZE 17.72 BY .83
      es-api-param-cliente-spf.agente-retencao AT ROW 15.5 COL 3.72 WIDGET-ID 8
+          LABEL "Agente Retená∆o"
           VIEW-AS TOGGLE-BOX
           SIZE 19.14 BY .83
      es-api-param-cliente-spf.ind-fat-par AT ROW 15.5 COL 46.72 WIDGET-ID 22
@@ -317,8 +331,6 @@ DEFINE FRAME f-cad
           SIZE 23.57 BY 1.67
      "Instruá∆o Banc†ria:" VIEW-AS TEXT
           SIZE 18 BY .67 AT ROW 11.75 COL 51.72 WIDGET-ID 140
-     "Grupo de Cliente (F°sica):" VIEW-AS TEXT
-          SIZE 23.29 BY .67 AT ROW 8.92 COL 4 WIDGET-ID 146
      " Modalidade Preferencial" VIEW-AS TEXT
           SIZE 23 BY .67 AT ROW 11.88 COL 81.29 WIDGET-ID 116
      "Grupo de Cliente (Jur°dica):" VIEW-AS TEXT
@@ -329,6 +341,8 @@ DEFINE FRAME f-cad
           SIZE 10 BY .67 AT ROW 17.21 COL 2.72 WIDGET-ID 112
      " Modalidade" VIEW-AS TEXT
           SIZE 11.86 BY .67 AT ROW 2.96 COL 86.14 WIDGET-ID 118
+     "Grupo de Cliente (F°sica):" VIEW-AS TEXT
+          SIZE 23.29 BY .67 AT ROW 8.92 COL 4 WIDGET-ID 146
      rt-button AT ROW 1 COL 1
      RECT-14 AT ROW 11.75 COL 80.72 WIDGET-ID 72
      RECT-18 AT ROW 2.75 COL 80.86 WIDGET-ID 80
@@ -350,6 +364,7 @@ DEFINE FRAME f-cad
    Allow: Basic,Browse,DB-Fields,Smart,Window,Query
    Container Links: 
    Add Fields to: Neither
+   Other Settings: COMPILE
  */
 &ANALYZE-RESUME _END-PROCEDURE-SETTINGS
 
@@ -400,6 +415,12 @@ ASSIGN {&WINDOW-NAME}:MENUBAR    = MENU m-livre:HANDLE.
   VISIBLE,,RUN-PERSISTENT                                               */
 /* SETTINGS FOR FRAME f-cad
    FRAME-NAME L-To-R                                                    */
+/* SETTINGS FOR TOGGLE-BOX es-api-param-cliente-spf.agente-retencao IN FRAME f-cad
+   EXP-LABEL                                                            */
+/* SETTINGS FOR FILL-IN es-api-param-cliente-spf.cod-cond-pag IN FRAME f-cad
+   EXP-LABEL                                                            */
+/* SETTINGS FOR FILL-IN es-api-param-cliente-spf.cod-transp IN FRAME f-cad
+   EXP-LABEL                                                            */
 /* SETTINGS FOR FILL-IN fi-det-1 IN FRAME f-cad
    NO-ENABLE                                                            */
 /* SETTINGS FOR FILL-IN fi-det-10 IN FRAME f-cad
@@ -416,6 +437,12 @@ ASSIGN {&WINDOW-NAME}:MENUBAR    = MENU m-livre:HANDLE.
    NO-ENABLE                                                            */
 /* SETTINGS FOR FILL-IN fi-det-9 IN FRAME f-cad
    NO-ENABLE                                                            */
+/* SETTINGS FOR TOGGLE-BOX es-api-param-cliente-spf.log-optan-suspens-ipi IN FRAME f-cad
+   EXP-LABEL                                                            */
+/* SETTINGS FOR FILL-IN es-api-param-cliente-spf.nat-operacao IN FRAME f-cad
+   EXP-LABEL                                                            */
+/* SETTINGS FOR FILL-IN es-api-param-cliente-spf.tp-rec-padrao IN FRAME f-cad
+   EXP-LABEL                                                            */
 IF SESSION:DISPLAY-TYPE = "GUI":U AND VALID-HANDLE(w-livre)
 THEN w-livre:HIDDEN = yes.
 
@@ -884,7 +911,7 @@ END.
 
 &Scoped-define SELF-NAME es-api-param-cliente-spf.tp-rec-padrao
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL es-api-param-cliente-spf.tp-rec-padrao w-livre
-ON F5 OF es-api-param-cliente-spf.tp-rec-padrao IN FRAME f-cad /* Receita Padr∆o */
+ON F5 OF es-api-param-cliente-spf.tp-rec-padrao IN FRAME f-cad /* Receita Padr√∆o */
 DO:
   assign l-implanta = yes.
      {include/zoomvar.i &prog-zoom=adzoom/z01ad259.w
@@ -897,7 +924,7 @@ END.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL es-api-param-cliente-spf.tp-rec-padrao w-livre
-ON LEAVE OF es-api-param-cliente-spf.tp-rec-padrao IN FRAME f-cad /* Receita Padr∆o */
+ON LEAVE OF es-api-param-cliente-spf.tp-rec-padrao IN FRAME f-cad /* Receita Padr√∆o */
 DO:
  
     FIND FIRST tipo-rec-desp WHERE tipo-rec-desp.tp-codigo = input frame {&frame-name} es-api-param-cliente-spf.tp-rec-padrao NO-LOCK NO-ERROR.
@@ -910,7 +937,7 @@ END.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL es-api-param-cliente-spf.tp-rec-padrao w-livre
-ON MOUSE-SELECT-DBLCLICK OF es-api-param-cliente-spf.tp-rec-padrao IN FRAME f-cad /* Receita Padr∆o */
+ON MOUSE-SELECT-DBLCLICK OF es-api-param-cliente-spf.tp-rec-padrao IN FRAME f-cad /* Receita Padr√∆o */
 DO:
   APPLY 'F5' TO es-api-param-cliente-spf.tp-rec-padrao.
 END.
@@ -1041,32 +1068,47 @@ PROCEDURE enable_UI :
       WITH FRAME f-cad IN WINDOW w-livre.
   IF AVAILABLE es-api-param-cliente-spf THEN 
     DISPLAY es-api-param-cliente-spf.portador es-api-param-cliente-spf.modalidade 
-          es-api-param-cliente-spf.port-prefer es-api-param-cliente-spf.tp-rec-padrao 
-          es-api-param-cliente-spf.cod-cond-pag es-api-param-cliente-spf.cod-transp 
-          es-api-param-cliente-spf.cod-gr-cli es-api-param-cliente-spf.cod-gr-cli-fisica 
-          es-api-param-cliente-spf.cod-canal-venda es-api-param-cliente-spf.nat-operacao 
-          es-api-param-cliente-spf.perc-fat-ped es-api-param-cliente-spf.nat-ope-ext 
-          es-api-param-cliente-spf.ins-banc es-api-param-cliente-spf.mod-prefer 
+          es-api-param-cliente-spf.port-prefer 
+          es-api-param-cliente-spf.tp-rec-padrao 
+          es-api-param-cliente-spf.cod-cond-pag 
+          es-api-param-cliente-spf.cod-transp 
+          es-api-param-cliente-spf.cod-gr-cli 
+          es-api-param-cliente-spf.cod-gr-cli-fisica 
+          es-api-param-cliente-spf.cod-canal-venda 
+          es-api-param-cliente-spf.nat-operacao 
+          es-api-param-cliente-spf.perc-fat-ped 
+          es-api-param-cliente-spf.nat-ope-ext es-api-param-cliente-spf.ins-banc 
+          es-api-param-cliente-spf.mod-prefer 
           es-api-param-cliente-spf.log-optan-suspens-ipi 
-          es-api-param-cliente-spf.emite-bloq es-api-param-cliente-spf.agente-retencao 
+          es-api-param-cliente-spf.emite-bloq 
+          es-api-param-cliente-spf.agente-retencao 
           es-api-param-cliente-spf.ind-fat-par 
           es-api-param-cliente-spf.log-calcula-pis-cofins-unid 
-          es-api-param-cliente-spf.log-nf-eletro es-api-param-cliente-spf.natureza 
+          es-api-param-cliente-spf.log-nf-eletro 
+          es-api-param-cliente-spf.natureza 
           es-api-param-cliente-spf.esp-pd-venda 
       WITH FRAME f-cad IN WINDOW w-livre.
   ENABLE bt-alterar bt-salvar rt-button RECT-14 RECT-18 RECT-22 RECT-23 RECT-24 
-         RECT-25 es-api-param-cliente-spf.portador es-api-param-cliente-spf.modalidade 
-         es-api-param-cliente-spf.port-prefer es-api-param-cliente-spf.tp-rec-padrao 
-         es-api-param-cliente-spf.cod-cond-pag es-api-param-cliente-spf.cod-transp 
-         es-api-param-cliente-spf.cod-gr-cli es-api-param-cliente-spf.cod-gr-cli-fisica 
-         es-api-param-cliente-spf.cod-canal-venda es-api-param-cliente-spf.nat-operacao 
-         es-api-param-cliente-spf.perc-fat-ped es-api-param-cliente-spf.nat-ope-ext 
-         es-api-param-cliente-spf.ins-banc es-api-param-cliente-spf.mod-prefer 
+         RECT-25 es-api-param-cliente-spf.portador 
+         es-api-param-cliente-spf.modalidade 
+         es-api-param-cliente-spf.port-prefer 
+         es-api-param-cliente-spf.tp-rec-padrao 
+         es-api-param-cliente-spf.cod-cond-pag 
+         es-api-param-cliente-spf.cod-transp 
+         es-api-param-cliente-spf.cod-gr-cli 
+         es-api-param-cliente-spf.cod-gr-cli-fisica 
+         es-api-param-cliente-spf.cod-canal-venda 
+         es-api-param-cliente-spf.nat-operacao 
+         es-api-param-cliente-spf.perc-fat-ped 
+         es-api-param-cliente-spf.nat-ope-ext es-api-param-cliente-spf.ins-banc 
+         es-api-param-cliente-spf.mod-prefer 
          es-api-param-cliente-spf.log-optan-suspens-ipi 
-         es-api-param-cliente-spf.emite-bloq es-api-param-cliente-spf.agente-retencao 
+         es-api-param-cliente-spf.emite-bloq 
+         es-api-param-cliente-spf.agente-retencao 
          es-api-param-cliente-spf.ind-fat-par 
          es-api-param-cliente-spf.log-calcula-pis-cofins-unid 
-         es-api-param-cliente-spf.log-nf-eletro es-api-param-cliente-spf.natureza 
+         es-api-param-cliente-spf.log-nf-eletro 
+         es-api-param-cliente-spf.natureza 
          es-api-param-cliente-spf.esp-pd-venda 
       WITH FRAME f-cad IN WINDOW w-livre.
   {&OPEN-BROWSERS-IN-QUERY-f-cad}
@@ -1211,7 +1253,7 @@ PROCEDURE local-initialize :
 
   {include/win-size.i}
 
-  {utp/ut9000.i "esint016" "1.00.00.000"}
+  {utp/ut9000.i "ESSPF016" "1.00.00.000"}
 
   /* Dispatch standard ADM method.                             */
   RUN dispatch IN THIS-PROCEDURE ( INPUT 'initialize':U ) .
