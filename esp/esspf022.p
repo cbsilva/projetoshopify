@@ -1,9 +1,9 @@
 /*----------------------------------------------------------------------------------------------/
  Programa..: esint0022.p
- Objetivo..: Interface Integra‡Æo Pedidos SHOPIFY - Importa‡Æo
+ Objetivo..: Interface Integraï¿½ï¿½o Pedidos SHOPIFY - Importaï¿½ï¿½o
  Data......: 27/07/2021
  Autor.....: 4Make Consultoria
- VersÆo....: 2.000.001
+ Versï¿½o....: 2.000.001
 -----------------------------------------------------------------------------------------------*/
 
 
@@ -42,6 +42,8 @@ DEFINE VARIABLE mJson            AS MEMPTR            NO-UNDO.
 DEFINE VARIABLE myParser         AS ObjectModelParser NO-UNDO. 
 DEFINE VARIABLE pJsonInput       AS JsonObject        NO-UNDO.
 
+DEF VAR clong as longchar.
+
 /* --------------------------------------------------------------------------------------------
     Define input parameters
 ----------------------------------------------------------------------------------------------*/
@@ -53,9 +55,9 @@ DEFINE OUTPUT PARAM pChave AS CHARACTER NO-UNDO.
 
 /******************************* Main Block **************************************************/
 
-OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\spf\logIntegracao\esspf022.log").
+//OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\spf\logIntegracao\esspf022.log").
 
-MESSAGE "inciando programa recuperacao json".
+
 
 FOR FIRST es-api-import-spf NO-LOCK
     WHERE ROWID(es-api-import-spf) = pRowid:
@@ -63,19 +65,23 @@ END.
 
 IF NOT AVAIL es-api-import-spf THEN
 DO:
-    ASSIGN pErro = "Registro nÆo encontrado.".
+    ASSIGN pErro = "Registro nï¿½o encontrado.".
     RETURN "NOK":U.
 END.
 
 
 FIX-CODEPAGE(cLongJson) = "UTF-8".
 
-MESSAGE "COPIANDO O OBJETO PARA VARIAVEL DO TIPO MEMPTR".
+LOG-MANAGER:WRITE-MESSAGE("COPIANDO O OBJETO PARA VARIAVEL DO TIPO MEMPTR") NO-ERROR.
 
 COPY-LOB es-api-import-spf.c-json TO mJson.  
 COPY-LOB mJson TO cLongJson NO-CONVERT.  
 
-MESSAGE "CRIANDO UM OBJETO DO TIPO MODEL PARSER !!".
+LOG-MANAGER:WRITE-MESSAGE("VALOR DO JSON " + STRING(CLONGJSON)) NO-ERROR.
+
+LOG-MANAGER:WRITE-MESSAGE( "CRIANDO UM OBJETO DO TIPO MODEL PARSER !!") NO-ERROR.
+
+
 
 
 myParser = NEW ObjectModelParser().                              
@@ -91,74 +97,61 @@ DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
 
    oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
 
-   if oJsonObjectMain:Has("customerId") THEN ASSIGN ttPedido.cnpjEmitente = oJsonObjectMain:GetCharacter(TRIM("customerId"))  NO-ERROR. 
+   if oJsonObjectMain:Has("customerId") THEN DO:
    
-MESSAGE "LEU CNPJ".
-   
+        ASSIGN ttPedido.cnpjEmitente = oJsonObjectMain:GetCharacter(TRIM("customerId")) NO-ERROR.
+        
+        ASSIGN ttPedido.cnpjEmitente = replace(ttPedido.cnpjEmitente,".","")
+               ttPedido.cnpjEmitente = replace(ttPedido.cnpjEmitente,"-","")
+               ttPedido.cnpjEmitente = replace(ttPedido.cnpjEmitente,"/","")
+               ttPedido.cnpjEmitente = replace(ttPedido.cnpjEmitente,"\","")  NO-ERROR.
+          
+        
+        
+   END.        
+  
    if oJsonObjectMain:Has("orderNumber") THEN ASSIGN ttPedido.pedidoCliente = oJsonObjectMain:GetCharacter(TRIM("orderNumber"))  NO-ERROR. 
-   
+
    if error-status:error then do:
    
-       if oJsonObjectMain:Has("orderNumber") THEN ASSIGN ttPedido.pedidoCliente = STRING(oJsonObjectMain:GetCharacter(TRIM("orderNumber")))  NO-ERROR. 
+       if oJsonObjectMain:Has("orderNumber") THEN ASSIGN ttPedido.pedidoCliente = STRING(oJsonObjectMain:GetInteger("orderNumber"))  NO-ERROR. 
    
    end.
-
-MESSAGE "LEU NUMBER".
-   
    if oJsonObjectMain:Has("orderId") THEN ASSIGN ttPedido.pedidoShopify = oJsonObjectMain:GetCharacter(TRIM("orderId"))  NO-ERROR. 
 
-MESSAGE "LEU ID".
    
    if oJsonObjectMain:Has("paymentDate") THEN ASSIGN ttPedido.dataPagamento = oJsonObjectMain:GetCharacter(TRIM("paymentDate"))  NO-ERROR. 
-MESSAGE "LEU PAY DATE".
    
 
    IF oJsonObjectMain:Has("ItemOrderList") THEN 
    DO: 
    
-    MESSAGE "TEM ITEM".
-   
          
          oJsonArraySec = oJsonObjectMain:GetJsonArray("ItemOrderList").
          
-        MESSAGE "LEU ARRAY ITEM".
-         
+         ojsonarraysec:write(clong).
+         //message string(clong).
          
          DO iCountSec = 1 TO oJsonArraySec:LENGTH:
          
-                 MESSAGE "LOOP ARRAY ITEM".
+            oJsonObjectSec =  oJsonArraySec:GetJsonObject(iCountSec).
 
-         
-            oJsonObjectSec =  oJsonArraySec:GetJsonObject(iCountSec).           
-            
-                    MESSAGE "LEU OBJETO ARRAY ITEM".
-
-            
             CREATE ttItensPedido.
             ASSIGN ttItensPedido.nrSeqPed = iCountSec.
-            
-            if oJsonObjectSec:Has("ItemCode") THEN ASSIGN	ttItensPedido.codigoItem  = oJsonObjectSec:GetCharacter("ItemCode") NO-ERROR.
-            
-                       MESSAGE "LEU ITEM".
 
+            
+            if oJsonObjectSec:Has("ItemCode")  THEN ASSIGN	ttItensPedido.codigoItem  = oJsonObjectSec:GetCharacter("ItemCode") NO-ERROR.
             if oJsonObjectSec:Has("Quantity" ) THEN ASSIGN	ttItensPedido.qtdPedida   = oJsonObjectSec:GetInteger("Quantity") NO-ERROR.
-
-                       MESSAGE "QTD".
-            
             if oJsonObjectSec:Has("Price"    ) THEN ASSIGN	ttItensPedido.precoUnit   = oJsonObjectSec:GetDecimal("Price") NO-ERROR.
-            
-                       MESSAGE "PRE€O".
-            
-
-            
+                   
          END.  
          
          
-MESSAGE "LEU ITENS".
+       // MESSAGE "LEU ITENS".
              
-         /* Rotina de sa¡da da valida‡Æo */
-         IF ERROR-STATUS:ERROR THEN DO:
-         
+         /* Rotina de saï¿½da da validaï¿½ï¿½o */
+        IF ERROR-STATUS:ERROR THEN DO:
+     
             pErro = "TI | Ocorreram erros durante o processamento: " + ERROR-STATUS:GET-MESSAGE(1).
             RETURN "NOK".
         END.       
@@ -167,36 +160,25 @@ MESSAGE "LEU ITENS".
             IF NOT TEMP-TABLE ttPedido:HAS-RECORDS THEN
             DO:
             
-                ASSIGN pErro = "ERRO: NÆo encontrado emitente no arquivo importado.".
+                ASSIGN pErro = "ERRO: Nï¿½o encontrado emitente no arquivo importado.".
                 RETURN "NOK":U.
                 
             END.
             ELSE
             DO:
-                    RUN esp/esspf022a.p (INPUT TABLE ttPedido,
-                                         INPUT TABLE ttItensPedido,
-                                         OUTPUT TABLE RowErrors).
-            
-            
-                    IF CAN-FIND(FIRST RowErrors NO-LOCK) THEN DO:
-                        FOR EACH RowErrors NO-LOCK:
-                            ASSIGN pErro = pErro + " " + RowErrors.ErrorDescription.
-                        END.
-                        RETURN "NOK":U.
-                        
-                    END.
-                    /*
-                    ELSE DO:
-                    
-                        RUN esp/esspf022efet.p (INPUT TABLE ttPedido).
-                    
-                    END.
-                    */
-            
-            END.
-            
-            
+                RUN esp/esspf022a.p (INPUT TABLE ttPedido,
+                                     INPUT TABLE ttItensPedido,
+                                     OUTPUT TABLE RowErrors).
         
+        
+                IF CAN-FIND(FIRST RowErrors NO-LOCK) THEN DO:
+                    FOR EACH RowErrors NO-LOCK:
+                        ASSIGN pErro = pErro + " " + RowErrors.ErrorDescription.
+                    END.
+                    RETURN "NOK":U.
+                    
+                END.
+            END.
             RETURN "OK".      
             
         END.

@@ -38,6 +38,7 @@ CREATE WIDGET-POOL.
 
 /* Local Variable Definitions ---                                       */
 DEFINE BUFFER b-es-api-param-ped-spf    FOR es-api-param-ped-spf.
+DEFINE BUFFER moeda FOR mgcad.moeda.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME

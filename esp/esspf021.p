@@ -1,9 +1,9 @@
 /*----------------------------------------------------------------------------------------------/
  Programa..: esint0021.p
- Objetivo..: Interface Integra‡Æo Clientes SHOPIFY - Importa‡Æo
+ Objetivo..: Interface Integraï¿½ï¿½o Clientes SHOPIFY - Importaï¿½ï¿½o
  Data......: 27/07/2021
  Autor.....: 4Make Consultoria
- VersÆo....: 2.000.001
+ Versï¿½o....: 2.000.001
 -----------------------------------------------------------------------------------------------*/
 
 
@@ -71,7 +71,7 @@ DEFINE OUTPUT PARAM pChave AS CHARACTER NO-UNDO.
 /******************************* Main Block **************************************************/
 
 
-LOG-MANAGER:WRITE-MESSAGE(">> INCIANDO A TRANSFORMA€ÇO DO JSON PARA TEMP-TABLE").
+LOG-MANAGER:WRITE-MESSAGE(">> INCIANDO A TRANSFORMAï¿½ï¿½O DO JSON PARA TEMP-TABLE").
 
 FOR FIRST es-api-import-spf NO-LOCK
     WHERE ROWID(es-api-import-spf) = pRowid:
@@ -79,7 +79,7 @@ END.
 
 IF NOT AVAIL es-api-import-spf THEN
 DO:
-    ASSIGN pErro = "Registro nÆo encontrado.".
+    ASSIGN pErro = "Registro nï¿½o encontrado.".
     RETURN "NOK":U.
 END.
 
@@ -88,20 +88,22 @@ FIX-CODEPAGE(cLongJson) = "UTF-8".
 
 LOG-MANAGER:WRITE-MESSAGE("COPIANDO O OBJETO PARA VARIAVEL DO TIPO MEMPTR").
 
-COPY-LOB es-api-import-spf.c-json TO mJson.  
-COPY-LOB mJson TO cLongJson NO-CONVERT.  
+COPY-LOB FROM OBJECT  es-api-import-spf.c-json TO mJson.
+ 
+LOG-MANAGER:WRITE-MESSAGE("COPIANDO MEMPTR PARA LONGCHAR").
 
-IF ERROR-STATUS:ERROR THEN
+COPY-LOB FROM OBJECT mJson TO cLongJson CONVERT SOURCE CODEPAGE "iso8859-1" TARGET CODEPAGE "utf-8".  
+
+IF ERROR-STATUS:ERROR OR ERROR-STATUS:NUM-MESSAGES > 0 THEN
 DO:
-    LOG-MANAGER:WRITE-MESSAGE("ERRO AO RECUPERAR VARIAVEIS " + RETURN-VALUE).
-    ASSIGN pErro = "TI - Erro Interno ao criar cliente " + RETURN-VALUE.
+    LOG-MANAGER:WRITE-MESSAGE("ERRO AO RECUPERAR VARIAVEIS " + ERROR-STATUS:GET-MESSAGE(1)).
+    ASSIGN pErro = "TI - Erro Interno ao criar cliente " + ERROR-STATUS:GET-MESSAGE(1).
     RETURN "NOK":U.
 END.
 
 
 
 LOG-MANAGER:WRITE-MESSAGE("CRIANDO UM OBJETO DO TIPO MODEL PARSER").
-
 
 myParser = NEW ObjectModelParser().                              
 pJsonInput = CAST(myParser:Parse(cLongJson),JsonObject).         
@@ -116,8 +118,8 @@ DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
 
     IF ERROR-STATUS:ERROR THEN
     DO:
-        LOG-MANAGER:WRITE-MESSAGE("ERRO AO RECUPERAR VARIAVEIS " + RETURN-VALUE).
-        ASSIGN pErro = "TI - Erro Interno ao criar cliente " + RETURN-VALUE.
+        LOG-MANAGER:WRITE-MESSAGE("ERRO AO RECUPERAR VARIAVEIS " + ERROR-STATUS:GET-MESSAGE(1)).
+        ASSIGN pErro = "TI - Erro Interno ao criar cliente " + ERROR-STATUS:GET-MESSAGE(1).
         RETURN "NOK":U.
     END.
     ELSE
@@ -134,7 +136,7 @@ END.
 
 IF NOT TEMP-TABLE ttCustomer:HAS-RECORDS THEN
 DO:
-    ASSIGN pErro = "ERRO: NÆo encontrado emitente no arquivo importado.".
+    ASSIGN pErro = "ERRO: Nï¿½o encontrado emitente no arquivo importado.".
     RETURN "NOK":U.
 END.
 ELSE
@@ -159,7 +161,7 @@ DO:
     END.
     ELSE
     DO:
-         ASSIGN pErro = "TI - Ocorreu erro durante a transforma‡Æo dos dados".
+         ASSIGN pErro = "TI - Ocorreu erro durante a transformaï¿½ï¿½o dos dados".
          RETURN "NOK":U.
     END.
 END.
@@ -169,19 +171,58 @@ END.
 PROCEDURE pi-criaTTEmitente:
 
     IF oJsonObjectMain:Has(TRIM("SocialReason   ")) THEN ASSIGN ttCustomer.RazaoSocial     = oJsonObjectMain:GetCharacter(TRIM("SocialReason  "))                     NO-ERROR. 
-    IF oJsonObjectMain:Has(TRIM("customerId     ")) THEN ASSIGN ttCustomer.CNPJ            = fnRemoveCaracter(oJsonObjectMain:GetCharacter(TRIM("customerId    ")))   NO-ERROR. 
+    IF oJsonObjectMain:Has(TRIM("customerId     ")) THEN ASSIGN ttCustomer.CNPJ            = fnRemoveCaracter(oJsonObjectMain:GetCharacter(TRIM("customerId")))       NO-ERROR. 
     IF oJsonObjectMain:Has(TRIM("IE             ")) THEN ASSIGN ttCustomer.IE              = oJsonObjectMain:GetCharacter(TRIM("IE            "))                     NO-ERROR. 
     IF oJsonObjectMain:Has(TRIM("Email          ")) THEN ASSIGN ttCustomer.Email           = oJsonObjectMain:GetCharacter(TRIM("Email         "))                     NO-ERROR. 
-    IF oJsonObjectMain:Has(TRIM("Phone          ")) THEN ASSIGN ttCustomer.Telefone        = oJsonObjectMain:GetCharacter(TRIM("Phone         "))                     NO-ERROR.    
+    IF oJsonObjectMain:Has(TRIM("phone          ")) THEN ASSIGN ttCustomer.Telefone        = REPLACE(oJsonObjectMain:GetCharacter(TRIM("phone")),"+55","")            .    
     IF oJsonObjectMain:Has(TRIM("InscMunicipal  ")) THEN ASSIGN ttCustomer.InscMunicipal   = oJsonObjectMain:GetCharacter(TRIM("InscMunicipal "))                     NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Address        ")) THEN ASSIGN ttCustomer.Endereco        = oJsonObjectMain:GetCharacter (TRIM("Address      "))                     NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Neighborhood   ")) THEN ASSIGN ttCustomer.Bairro          = oJsonObjectMain:GetCharacter (TRIM("Neighborhood "))                     NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("Address        ")) THEN ASSIGN ttCustomer.Endereco        = oJsonObjectMain:GetCharacter(TRIM("Address      "))                      NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("Neighborhood   ")) THEN ASSIGN ttCustomer.Bairro          = oJsonObjectMain:GetCharacter(TRIM("Neighborhood "))                      NO-ERROR.
     IF oJsonObjectMain:Has(TRIM("Zip            ")) THEN ASSIGN ttCustomer.Cep             = fnRemoveCaracter(oJsonObjectMain:GetCharacter(TRIM("Zip")))              NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("State          ")) THEN ASSIGN ttCustomer.Estado          = oJsonObjectMain:GetCharacter (TRIM("State        "))                     NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("City           ")) THEN ASSIGN ttCustomer.Cidade          = oJsonObjectMain:GetCharacter (TRIM("City         "))                     NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("Country        ")) THEN ASSIGN ttCustomer.Pais            = oJsonObjectMain:GetCharacter (TRIM("Country      "))                     NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("State          ")) THEN ASSIGN ttCustomer.Estado          = oJsonObjectMain:GetCharacter(TRIM("State        "))                      NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("City           ")) THEN ASSIGN ttCustomer.Cidade          = oJsonObjectMain:GetCharacter(TRIM("City         "))                      NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("Country        ")) THEN ASSIGN ttCustomer.Pais            = REPLACE(oJsonObjectMain:GetCharacter(TRIM("Country")),"BRAZIL","BRASIL") NO-ERROR.
     IF oJsonObjectMain:Has(TRIM("Complement     ")) THEN ASSIGN ttCustomer.Complemento     = oJsonObjectMain:GetCharacter (TRIM("Complement   "))                     NO-ERROR.
-    IF oJsonObjectMain:Has(TRIM("shopifyId      ")) THEN ASSIGN ttCustomer.ShopifyId       = oJsonObjectMain:GetCharacter (TRIM("shopifyId    "))                     NO-ERROR.
+    IF oJsonObjectMain:Has(TRIM("shopifyID      ")) THEN ASSIGN ttCustomer.ShopifyId       = STRING(oJsonObjectMain:GetCharacter("shopifyID"))                        NO-ERROR.
+
+    IF ttCustomer.ShopifyId = "" THEN 
+        IF oJsonObjectMain:Has(TRIM("shopifyID")) THEN ASSIGN ttCustomer.ShopifyId  = oJsonObjectMain:GetCharacter("shopifyID") NO-ERROR.
+                                                                                                                                                                    
+   LOG-MANAGER:WRITE-MESSAGE("#####INFORMACOES RECEBIDAS PELO JSON DE CLIENTES ###") NO-ERROR.
+
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.RazaoSocial    " + STRING(ttCustomer.RazaoSocial  )) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.ShopifyId      " + STRING(ttCustomer.ShopifyId    )) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.CNPJ           " + STRING(ttCustomer.CNPJ         )) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.IE             " + STRING(ttCustomer.IE           )) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.Email          " + STRING(ttCustomer.Email        )) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.Telefone       " + STRING(ttCustomer.Telefone     )) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.InscMunicipal  " + STRING(ttCustomer.InscMunicipal)) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.Endereco       " + STRING(ttCustomer.Endereco     )) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.Complemento    " + STRING(ttCustomer.Complemento  )) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.Bairro         " + STRING(ttCustomer.Bairro       )) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.Cep            " + STRING(ttCustomer.Cep          )) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.Estado         " + STRING(ttCustomer.Estado       )) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.Cidade         " + STRING(ttCustomer.Cidade       )) NO-ERROR. 
+   LOG-MANAGER:WRITE-MESSAGE("ttCustomer.Pais           " + STRING(ttCustomer.Pais         )) NO-ERROR. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                                                                                                                                                                      
                                                                                                                                                                      
                                                                                                                                                                      

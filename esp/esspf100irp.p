@@ -40,10 +40,10 @@ DEFINE VARIABLE iErro AS INTEGER     NO-UNDO.
  */
 
 /* RUN abrirLog("//fenix/ERP/camil/teste-verde/especificos/lasf/roboSFA/esspf001irp_log_" + stamp() + ".txt"). */
-LOG-MANAGER:WRITE-MESSAGE("In°cio Processo - esspf100IRP - V.1.0 - MACMILLAN - Importaá∆o").
+LOG-MANAGER:WRITE-MESSAGE("INICIO DO PROCESSO - ESSPF100IRP - V.1.1 - MACMILLAN - Importaá∆o").
 
 
-/* MESSAGE "LASF MAC - PAUSE"                    */
+/* MESSAGE "MAC - PAUSE"                    */
 /*     VIEW-AS ALERT-BOX INFORMATION BUTTONS OK. */
 
 DEFINE VARIABLE iLoop AS INTEGER     NO-UNDO.
@@ -160,16 +160,11 @@ PROCEDURE piNewCarregaPend:
 
             //Reprocessamento autom†tico
             proc-pend_3:
-            FOR EACH bf-es-api-import-spf 
+            FOR EACH bf-es-api-import-spf NO-LOCK
                 WHERE bf-es-api-import-spf.cd-tipo-integr   = es-api-param-spf.cd-tipo-integr
                   AND bf-es-api-import-spf.cod-status          = 2
                   AND bf-es-api-import-spf.data-movto        >= DATETIME(TODAY - 30) 
-
-                NO-LOCK
-                
-                BY bf-es-api-import-spf.data-fim
-
-                :
+                   BY bf-es-api-import-spf.data-fim:
 
 
                 LOG-MANAGER:WRITE-MESSAGE("INI REPROCESS. - Processando CD-TIPO-TRANS:" + STRING(bf-es-api-import-spf.cd-tipo-integr) 
@@ -199,7 +194,6 @@ PROCEDURE piNewCarregaPend:
         LOG-MANAGER:WRITE-MESSAGE("FIM - FOR EACH es-api-param-spf").
 
     END.
-
 
 
 END PROCEDURE.
@@ -262,11 +256,11 @@ PROCEDURE pi-processa-transacao:
         LOG-MANAGER:WRITE-MESSAGE("Estou na pi-processa-transacao - Antes de executar :" + STRING(es-api-param-spf.programa-integr)).
 
         RUN VALUE( es-api-param-spf.programa-integr ) (INPUT ROWID(es-api-import-spf),
-                                                   OUTPUT c-erro,
-                                                   OUTPUT c-chave) NO-ERROR.
+                                                       OUTPUT c-erro,
+                                                       OUTPUT c-chave) NO-ERROR.
 
         LOG-MANAGER:WRITE-MESSAGE("Estou na pi-processa-transacao - Depois de executar :" + STRING(es-api-param-spf.programa-integr)).
-
+        
         ASSIGN  vLogEfetivacaoNOK = NO.
         /* ------ Gerencia retorno do processo -----*/
 
@@ -276,18 +270,21 @@ PROCEDURE pi-processa-transacao:
     LOG-MANAGER:WRITE-MESSAGE("vLogEfetivacaoNOK      "  +   STRING(vLogEfetivacaoNOK)          ).
     LOG-MANAGER:WRITE-MESSAGE("c-erro                 "  +   c-erro                             ).
     LOG-MANAGER:WRITE-MESSAGE("RETURN-VALUE           "  +   RETURN-VALUE                       ).
-    LOG-MANAGER:WRITE-MESSAGE("ERROR-STATIS:ERROR     "  +   STRING(ERROR-STATUS:ERROR )        ).
+    LOG-MANAGER:WRITE-MESSAGE("ERROR-STATUS:ERROR     "  +   STRING(ERROR-STATUS:ERROR )        ).
     LOG-MANAGER:WRITE-MESSAGE("c-chave                "  +   c-chave                            ).
     IF ERROR-STATUS:ERROR THEN
     DO:
         DO iErro = 1 TO ERROR-STATUS:NUM-MESSAGES:
             LOG-MANAGER:WRITE-MESSAGE("ERRO PROGRESS:  " + ERROR-STATUS:GET-MESSAGE(iErro) + "(" + STRING(ERROR-STATUS:GET-NUMBER(iErro)) + ")" ).
+
         END.
     END.
 
-    
-    IF  vLogEfetivacaoNOK /* Erro Travamento de Registro */
-    OR  (RETURN-VALUE = "NOK")
+
+/*     MESSAGE "esspf100irp.p - Erro Travamento de Registro? " vLogEfetivacaoNOK /* Erro Travamento de Registro */ */
+/*                 OR  (RETURN-VALUE = "NOK").                                                                     */
+
+    IF  vLogEfetivacaoNOK /* Erro Travamento de Registro */ OR  (RETURN-VALUE = "NOK")
     THEN DO:
         DO TRANSACTION:
             //Tem Erro de negocio
@@ -339,51 +336,6 @@ PROCEDURE pi-processa-transacao:
 
     RUN pi-gera-status (INPUT c-erro).
     LOG-MANAGER:WRITE-MESSAGE("PONTO-001 - METODO:pi-processa-transacao:" + STRING(TRANSACTION)).
-
-/*     IF  vLogEfetivacaoNOK /* Erro Travamento de Registro */                                                                                                                               */
-/*         OR  (RETURN-VALUE = "NOK")                                                                                                                                                        */
-/*         /*OR  (RETURN-VALUE = "ERROTEC")*/                                                                                                                                                */
-/*     THEN DO:                                                                                                                                                                              */
-/*         DO TRANSACTION:                                                                                                                                                                   */
-/*             //Tem Erro de negocio                                                                                                                                                         */
-/*             IF RETURN-VALUE = "NOK" AND INDEX(c-erro, "#ERROTEC") = 0                                                                                                                      */
-/*             THEN DO:                                                                                                                                                                      */
-/*                 ASSIGN  es-api-import-spf.data-fim      = NOW                                                                                                                                 */
-/*                         es-api-import-spf.ind-situacao  = 2 // Processado                                                                                                                     */
-/*                         es-api-import-spf.cod-status    = 2 // Com erro                                                                                                                       */
-/*                         es-api-import-spf.chave         = IF c-chave = "" THEN es-api-import-spf.chave ELSE c-chave                                                                               */
-/*                         c-erro                      = "Houve erro ao processar transaá∆o. " + c-erro.                                                                                       */
-/*                     .                                                                                                                                                                     */
-/*             END.                                                                                                                                                                          */
-/*             ELSE IF vLogEfetivacaoNOK OR  INDEX(c-erro, "#ERROTEC") > 0 /* Erro Travamento de Registro */                                                                                  */
-/*             THEN DO:                                                                                                                                                                      */
-/*                 ASSIGN  es-api-import-spf.data-fim      = NOW                                                                                                                                 */
-/*                         es-api-import-spf.ind-situacao  = 3 // Processado                                                                                                                     */
-/*                         es-api-import-spf.chave         = IF c-chave = "" THEN es-api-import-spf.chave ELSE c-chave                                                                               */
-/*                         c-erro                      = "Ocorreu erro progress que impediu a conclus∆o da transaá∆o. " + c-erro + CHR(10) + "Valor Retornado: " + tratarString(RETURN-VALUE). */
-/*                 IF ERROR-STATUS:ERROR THEN                                                                                                                                                */
-/*                 DO:                                                                                                                                                                       */
-/*                     DO iErro = 1 TO ERROR-STATUS:NUM-MESSAGES:                                                                                                                            */
-/*                         c-erro                      = c-erro + CHR(10) + ERROR-STATUS:GET-MESSAGE(iErro) + "(" + STRING(ERROR-STATUS:GET-NUMBER(iErro)) + ")" .                             */
-/*                     END.                                                                                                                                                                  */
-/*                 END.                                                                                                                                                                      */
-/*             END.                                                                                                                                                                          */
-/*         END.                                                                                                                                                                              */
-/*     END.                                                                                                                                                                                  */
-/*     ELSE DO:                                                                                                                                                                              */
-/*         DO TRANSACTION:                                                                                                                                                                   */
-/*             ASSIGN  es-api-import-spf.data-fim      = NOW                                                                                                                                     */
-/*                     es-api-import-spf.ind-situacao  = 2                                                                                                                                       */
-/*                     es-api-import-spf.cod-status    = 1                                                                                                                                       */
-/*                     es-api-import-spf.chave         = IF c-chave = "" THEN es-api-import-spf.chave ELSE c-chave                                                                                   */
-/*                     c-erro                      =  "Registro integrado com sucesso".                                                                                                       */
-/*             /*IF RETURN-VALUE <> "" AND RETURN-VALUE <> "OK" THEN*/                                                                                                                       */
-/*                 ASSIGN c-erro = c-erro + "Valor Retornado: " + tratarString(RETURN-VALUE) .                                                                                                 */
-/*                                                                                                                                                                                           */
-/*         END.                                                                                                                                                                              */
-/*     END.                                                                                                                                                                                  */
-/*     RUN pi-gera-status (INPUT c-erro).                                                                                                                                                     */
-/*     LOG-MANAGER:WRITE-MESSAGE("PONTO-001 - METODO:pi-processa-transacao:" + STRING(TRANSACTION)).                                                                                         */
 
     RELEASE es-api-import-spf.
     LOG-MANAGER:WRITE-MESSAGE("FIM - METODO:pi-processa-transacao:" + STRING(TRANSACTION)).
@@ -447,10 +399,6 @@ DEFINE INPUT  PARAMETER cLog AS CHARACTER   NO-UNDO.
 
     LOG-MANAGER:WRITE-MESSAGE(cLog).
 
-/*     MESSAGE clog                           */
-/*         VIEW-AS ALERT-BOX INFO BUTTONS OK. */
-
-/*     RUN gerarLogSFA(cLog). */
 
 END PROCEDURE.
 

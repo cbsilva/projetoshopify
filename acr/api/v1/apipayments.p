@@ -1,10 +1,10 @@
 /*------------------------------------------------------------------------
-    File        : Order.p
-    Purpose     : API REST para Manuten‡Æo de Pedidos de Venda
+    File        : apiPayments.p
+    Purpose     : API REST para Implantação de Títulos
     Syntax      :
-    Description : Pedido de Venda
+    Description : Clientes
     Author(s)   : 4Make Consultoria
-    Created     : 08.08.2021
+    Created     : 08.09.2021
     Notes       :
   ----------------------------------------------------------------------*/
 
@@ -12,15 +12,16 @@
 {utp/ut-api.i}
 {utp/ut-api-utils.i}
 
-{include/i-prgvrs.i Order 2.00.00.000} /*** 010000 ***/
+{include/i-prgvrs.i customer 2.00.00.000} /*** 010000 ***/
 
 {utp/ut-api-action.i pi-create POST /~*}
-
+{utp/ut-api-action.i pi-update PUT /~*}
+{utp/ut-api-action.i pi-getAll GET /~*}
 {utp/ut-api-notfound.i}
 
 
-{pdp/api/v1/apiOrder.i}
-{pdp/api/v1/apiOrderVar.i}
+{acr/api/v1/apipayments.i}
+{acr/api/v1/apipaymentsVar.i}
 
 /* ********************  Preprocessor Definitions  ******************** */
 
@@ -28,42 +29,51 @@
 
 /* **********************  Internal Procedures  *********************** */
 /*----------------------------------------------------------------------
- Purpose: Efetua a cria‡Æo de um novo pedido
+ Purpose: Efetua a cria‡Æo de um novo emitente
 ------------------------------------------------------------------------*/
 PROCEDURE pi-create:
     DEFINE INPUT  PARAMETER jsonInput  AS JsonObject NO-UNDO.
-    DEFINE OUTPUT PARAMETER jsonOutput AS JsonObject NO-UNDO.    
+    DEFINE OUTPUT PARAMETER jsonOutput AS JsonObject NO-UNDO.
 
-    //OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Spf\logIntegracao\PED.txt") APPEND.
-    //    PUT UNFORMATTED "INICIO DA INTEGRACAO DE PEDIDOS" SKIP.
+    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\spf\logIntegracao\Payments.txt") APPEND.
+        PUT UNFORMATTED "INICIO DA INTEGRACAO DE TITULOSS" SKIP.
 
     FIX-CODEPAGE(jsonRecebido) = "UTF-8".
-    ASSIGN oRequestParser      = NEW JsonAPIRequestParser(jsonInput)
-           jsonRecebido        = oRequestParser:getPayloadLongChar()
-           i-prox-numero       = NEXT-VALUE(seq_import)
-           cNrPedido           = "".
+    ASSIGN oRequestParser  = NEW JsonAPIRequestParser(jsonInput)
+           jsonRecebido    = oRequestParser:getPayloadLongChar()
+           i-prox-numero   = NEXT-VALUE(seq_import)
+           cCnpjCpf        = ""
+           cNrPedido       = "".
+
+    oJsonArrayMain = jsonInput:GetJsonObject("payload":U):GetJsonArray("payments":U).
 
 
-    oJsonArrayMain = jsonInput:GetJsonObject("payload":U):GetJsonArray("order":U).
+    PUT UNFORMATTED "OK1" SKIP.
 
     DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
         oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
 
-        IF oJsonObjectMain:Has("orderNumber")   then do:
-            cNrPedido = REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("orderNumber"),".",""),"/",""),"-","")  NO-ERROR.
-            IF cNrPedido = "" THEN
-                cNrPedido = STRING(oJsonObjectMain:GetInteger("orderNumber")) NO-ERROR.
-            LEAVE.
+        PUT UNFORMATTED "OK2" SKIP.
+
+        IF oJsonObjectMain:Has("customerCNPJ")   then do:
+            cCnpjCpf = REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("customerCNPJ"),".",""),"/",""),"-","")  NO-ERROR             .
+            
+        END.
+		
+		IF oJsonObjectMain:Has("orderNumber")   then do:
+            cNrPedido = "DG" + REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("orderNumber"),".",""),"/",""),"-","")  NO-ERROR             .
+            
         END.
     END.
 
+    PUT UNFORMATTED "OK3" SKIP.
 
     MESSAGE SUBSTITUTE("PROXIMO NUMERO &1", i-prox-numero).
     
     CREATE  es-api-import-spf.                                            
     ASSIGN  es-api-import-spf.id-movto          = i-prox-numero 
-            es-api-import-spf.cd-tipo-integr    = 22 /*-- Importacao de Pedidos --*/   
-            es-api-import-spf.chave             = "DG" + cNrPedido     
+            es-api-import-spf.cd-tipo-integr    = 23 /*-- Importacao de Titulos --*/   
+            es-api-import-spf.chave             = cCnpjCpf + '-' + cNrPedido   
             es-api-import-spf.data-movto        = NOW                     
             es-api-import-spf.data-inicio       = NOW                     
             es-api-import-spf.data-fim          = ?                       
@@ -72,7 +82,7 @@ PROCEDURE pi-create:
             es-api-import-spf.c-json            = jsonRecebido.   
 
 
-    RUN pi-gera-status (cNrPedido,                
+    RUN pi-gera-status (cCnpjCpf + '-' + cNrPedido,                
                         "Registro em processamento",                          
                         "").                                
                                                             
@@ -85,7 +95,7 @@ PROCEDURE pi-create:
                            INPUT FALSE,                     
                            OUTPUT jsonOutput).
 
-    //OUTPUT CLOSE.
+    OUTPUT CLOSE.
 
 END PROCEDURE.
 
