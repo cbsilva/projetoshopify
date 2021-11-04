@@ -56,7 +56,7 @@ DEFINE OUTPUT PARAM pChave AS CHARACTER NO-UNDO.
 //OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Spf\logIntegracao\esint023.txt").
 
 /* MESSAGE "inciando programa recuperacao json" VIEW-AS ALERT-BOX. */
-LOG-MANAGER:WRITE-MESSAGE("esspf023.p - inciando programa recuperacao json").
+//LOG-MANAGER:WRITE-MESSAGE("esspf023.p - inciando programa recuperacao json").
 
 FOR FIRST es-api-import-spf NO-LOCK
     WHERE ROWID(es-api-import-spf) = pRowid:
@@ -81,7 +81,7 @@ myParser = NEW ObjectModelParser().
 pJsonInput = CAST(myParser:Parse(cLongJson),JsonObject).         
 oJsonArrayMain = pJsonInput:GetJsonArray("payments":U).  
 
-LOG-MANAGER:WRITE-MESSAGE("esspf023.p - CRIANDO UM OBJETO DO TIPO MODEL PARSER").
+//LOG-MANAGER:WRITE-MESSAGE("esspf023.p - CRIANDO UM OBJETO DO TIPO MODEL PARSER").
 
 DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
 
@@ -92,13 +92,13 @@ DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
 
   //  MESSAGE "CHAMANDO ROTINA PARA CRIAR OS DADOS NA TEMP-TABLE".
 
-    LOG-MANAGER:WRITE-MESSAGE("esspf023.p - CHAMANDO ROTINA PARA CRIAR OS DADOS NA TEMP-TABLE").
+    //LOG-MANAGER:WRITE-MESSAGE("esspf023.p - CHAMANDO ROTINA PARA CRIAR OS DADOS NA TEMP-TABLE").
 
     RUN pi-criaTTPayments.
 
 END.
 
-LOG-MANAGER:WRITE-MESSAGE("esspf023.p - NOT TEMP-TABLE ttPayments:HAS-RECORDS " + STRING(NOT TEMP-TABLE ttPayments:HAS-RECORDS) ).
+//LOG-MANAGER:WRITE-MESSAGE("esspf023.p - NOT TEMP-TABLE ttPayments:HAS-RECORDS " + STRING(NOT TEMP-TABLE ttPayments:HAS-RECORDS) ).
 
 IF NOT TEMP-TABLE ttPayments:HAS-RECORDS THEN
 DO:
@@ -128,13 +128,14 @@ DO:
         RETURN RETURN-VALUE.
         */
         
-        LOG-MANAGER:WRITE-MESSAGE("esspf023.p - Chamando 23a -  Pedido: " + ttPayments.nrPedido ).
+        //LOG-MANAGER:WRITE-MESSAGE("esspf023.p - Chamando 23a -  Pedido: " + ttPayments.nrPedido ).
 
+
+            
         RUN esp/esspf023a.p (INPUT TABLE ttPayments,
-                             OUTPUT TABLE RowErrors). 
-
+                             OUTPUT TABLE RowErrors).
         
-        LOG-MANAGER:WRITE-MESSAGE("esspf023.p - Retornando da 23a - Pedido: " + ttPayments.nrPedido + ". H  erros?" + STRING(CAN-FIND(FIRST RowErrors NO-LOCK)) ).
+        //LOG-MANAGER:WRITE-MESSAGE("esspf023.p - Retornando da 23a - Pedido: " + ttPayments.nrPedido + ". H  erros?" + STRING(CAN-FIND(FIRST RowErrors NO-LOCK)) ).
 
         IF CAN-FIND(FIRST RowErrors NO-LOCK) THEN
         DO:

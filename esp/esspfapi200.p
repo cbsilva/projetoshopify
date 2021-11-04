@@ -206,8 +206,6 @@ PROCEDURE piPostJsonObj:
         RETURN "NOK":U.
     END.
 
-    MESSAGE "##API" es-api-param-spf.cd-tipo-integr
-        VIEW-AS ALERT-BOX INFORMATION BUTTONS OK.
     
     FIND FIRST es-api-token-param-spf  
          WHERE es-api-token-param-spf.cod-sistema = es-api-param-spf.cd-sistema 
@@ -257,10 +255,11 @@ PROCEDURE piPostJsonObj:
                     STRING(oResponse:statusCode)          + 
                     " - " + 
                     STRING(oResponse:StatusReason),"").
+                    
         RETURN "NOK":U.
     END.
-
     
+    RETURN "OK":U.  
 
 
 END PROCEDURE.

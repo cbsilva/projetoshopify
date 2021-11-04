@@ -87,7 +87,7 @@ END.
 FOR FIRST es-api-export-spf WHERE ROWID(es-api-export-spf) = r-table NO-LOCK: END.
 IF NOT AVAIL es-api-export-spf THEN
 DO:
-    ASSIGN c-erro = "Registro Tabela de Nota Fiscal nÆo localizado".
+    ASSIGN c-erro = "Registro Tabela de Nota Fiscal nÆo localizado. ".
     RUN pi-deleta-objetos.
     RETURN "NOK":U.
 END.
@@ -105,7 +105,7 @@ END.
 FIND FIRST es-api-token-param-spf NO-LOCK WHERE es-api-token-param-spf.cod-sistema = es-api-param-spf.cd-sistema NO-ERROR.
 IF NOT AVAIL es-api-token-param-spf THEN
 DO:
-    ASSIGN c-erro = "TI - Informa‡äes de TOKEN nÆo parametrizadas no programa ESSPF300.".
+    ASSIGN c-erro = "TI - Informa‡äes de TOKEN nÆo parametrizadas no programa ESSPF300. ".
     RETURN "NOK":U.
 END.
 
@@ -146,9 +146,6 @@ FIND CURRENT es-api-export-spf EXCLUSIVE-LOCK NO-ERROR.
 ASSIGN es-api-export-spf.c-json = cJsonBody.
 FIND CURRENT es-api-export-spf NO-LOCK NO-ERROR.
 
-MESSAGE "##4" es-api-param-spf.cd-tipo-integr
-    VIEW-AS ALERT-BOX INFORMATION BUTTONS OK.
-
 
 /* ------------ Envia Objeto Json --------- */
 RUN piPostJsonObj IN hAPI (INPUT oJsonObjMain, INPUT ROWID(es-api-param-spf),
@@ -158,7 +155,10 @@ RUN piPostJsonObj IN hAPI (INPUT oJsonObjMain, INPUT ROWID(es-api-param-spf),
 IF TEMP-TABLE RowErrors:HAS-RECORDS THEN 
 DO:
     FOR EACH RowErrors NO-LOCK:
-        ASSIGN c-erro = c-erro + string(RowErrors.ErrorNumber)  + " - " + RowErrors.ErrorDescription.
+        IF c-erro = "" THEN
+            ASSIGN c-erro = string(RowErrors.ErrorNumber)  + " - " + RowErrors.ErrorDescription.
+        ELSE 
+            ASSIGN c-erro = c-erro + " | " + string(RowErrors.ErrorNumber)  + " - " + RowErrors.ErrorDescription.
     END.
     RUN pi-deleta-objetos.    
     RETURN "NOK":U.
@@ -214,7 +214,7 @@ PROCEDURE pi-deleta-objetos:
         DELETE OBJECT oJsonArrayMain  NO-ERROR.
 
 
-    MESSAGE "Imprimindo variavel de erro" c-erro.
+    LOG-MANAGER:WRITE-MESSAGE(">>>Imprimindo variavel de erro"  + c-erro) NO-ERROR.
     
 END PROCEDURE.
 

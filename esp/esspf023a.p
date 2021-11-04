@@ -81,6 +81,8 @@ def var p_cod_matriz_trad_org_ext as char initial "EMS2" no-undo.
 def var p_log_atualiza_refer_acr  as log  no-undo.
 def var p_log_assume_dat_emis     as log  no-undo.
 
+def var lDebuga as log initial no.
+ 
 DEFINE VARIABLE h-boad098       AS HANDLE          NO-UNDO. /* Busca cliente */
 /**** Definicao de temp-table ****************************************/
 {prgfin/acr/acr900zi.i}
@@ -92,6 +94,7 @@ DEF BUFFER b-es-api-param-acr-spf FOR es-api-param-acr-spf.
     Functions
 ----------------------------------------------------------------------------------------------*/
 
+//message 'esspf023a' view-as alert-box.
 
 
 /* --------------------------------------------------------------------------------------------
@@ -110,13 +113,15 @@ DEFINE OUTPUT PARAM TABLE FOR RowErrors.
 EMPTY TEMP-TABLE RowErrors.
 EMPTY TEMP-TABLE tt_integr_acr_repres_comis_2.
 EMPTY TEMP-TABLE tt_integr_acr_item_lote_impl_8.
-EMPTY TEMP-TABLE tt_integr_acr_aprop_relacto_2.
+EMPTY TEMP-TABLE tt_integr_acr_aprop_relacto_2
+.
 
-IF LOG-MANAGER:LOGFILE-NAME = "" OR LOG-MANAGER:LOGFILE-NAME     = ? THEN
-    RUN ativarClientLOg.
+
+//   RUN ativarClientLOg.
+
 
 //MESSAGE "INICIANDO INTEGRACAO FINANCEIRA".
-LOG-MANAGER:WRITE-MESSAGE("23A - INICIANDO INTEGRACAO FINANCEIRA" + CHR(10) + CHR(10)).
+//LOG-MANAGER:WRITE-MESSAGE("23A - INICIANDO INTEGRACAO FINANCEIRA" + CHR(10) + CHR(10)).
 
 FIND FIRST ttPayments NO-LOCK NO-ERROR.
 find first es-api-param-acr-spf no-lock no-error.
@@ -135,8 +140,15 @@ assign i-cod-emitente = 0.
 IF NOT VALID-HANDLE(h-boad098) THEN
     RUN adbo/boad098.p PERSISTENT SET h-boad098.
 
+IF ldebuga then
+    message ttPayments.cpfCnpj view-as alert-box warning.
+
 RUN findCGC IN h-boad098 (INPUT ttPayments.cpfCnpj, OUTPUT c-return).
 ASSIGN c-retorno = RETURN-VALUE.
+
+IF ldebuga then
+    message ttPayments.cpfCnpj skip c-return view-as alert-box warning.
+
 
 IF c-retorno <> "OK" THEN DO:
 
@@ -158,7 +170,7 @@ IF c-retorno <> "OK" THEN DO:
             RUN piErro(INPUT 17006,
                        INPUT "ERRO: Cliente inexistente com CGC " + ttPayments.cpfCnpj,
                        INPUT "ERRO: Cliente n∆o encontrado.").
-            RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
+            //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
             /*RETURN "NOK":U.*/
             ASSIGN l-erro = YES.
         END.
@@ -168,11 +180,16 @@ IF c-retorno <> "OK" THEN DO:
         if avail emitente then
             assign i-cod-emitente = emitente.cod-emitente.
     END.
+    
 END.
 ELSE DO:
+
+
+
     find first emitente use-index cgc where emitente.cgc = ttPayments.cpfCnpj no-lock no-error.
     if avail emitente then
         assign i-cod-emitente = emitente.cod-emitente.
+        
     ELSE DO:
         ASSIGN c-cpf-cnpj = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(ttPayments.cpfCnpj,"/",""),"\",""),".",""),",",""),"-","").
     
@@ -187,21 +204,33 @@ ELSE DO:
             RUN piErro(INPUT 17006,
                        INPUT "ERRO: Cliente com CNPJ encontrado mas com erro na busca: CGC " + c-cpf-cnpj,
                        INPUT "ERRO: Cliente com erro de busca.").
-            RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
+            //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
             /*RETURN "NOK":U.*/
             ASSIGN l-erro = YES.
         END.
     END.
+       
+   IF ldebuga then
+       message 'tem emitente? ' avail emitente view-as alert-box warning.
+   
+    
+    
+    
 END.
 
 IF VALID-HANDLE(h-boad098) THEN
     DELETE PROCEDURE h-boad098.
 
 RUN pi-valida-entrada.
+
 IF RETURN-VALUE = "NOK" THEN DO:
 /*     run pi-finalizar in h-acomp. */
     RETURN "NOK".
 END.
+
+//MESSAGE 'VALIDA-ENTRADA' SKIP RETURN-VALUE SKIP CAN-FIND(FIRST ROWERRORS) VIEW-AS ALERT-BOX.
+//LOG-MANAGER:WRITE-MESSAGE("ESSPF023A - VALIDA ENTRADA" + CHR(10) + CHR(10)).
+
 
 RUN pi-carrega-params.
 IF RETURN-VALUE = "NOK" THEN DO:
@@ -209,17 +238,30 @@ IF RETURN-VALUE = "NOK" THEN DO:
     RETURN "NOK".
 END.
 
+//MESSAGE 'CARREG-PARAMS' SKIP RETURN-VALUE SKIP CAN-FIND(FIRST ROWERRORS) VIEW-AS ALERT-BOX.
+//LOG-MANAGER:WRITE-MESSAGE("ESSPF023A - CARREGA PARAMS" + CHR(10) + CHR(10)).
+
+
 RUN pi-carrega-tts.
 IF RETURN-VALUE = "NOK" THEN DO:
 /*     run pi-finalizar in h-acomp. */
     RETURN "NOK".
 END.
 
+
+//MESSAGE 'CARREGA-TTS' SKIP RETURN-VALUE SKIP CAN-FIND(FIRST ROWERRORS) VIEW-AS ALERT-BOX.
+///LOG-MANAGER:WRITE-MESSAGE("ESSPF023A - CARREGA-TTS" + CHR(10) + CHR(10)).
+
+
 RUN pi-chama-api.
 IF RETURN-VALUE = "NOK" THEN DO:
 /*     run pi-finalizar in h-acomp. */
     RETURN "NOK".
 END.
+
+//MESSAGE 'CHAMA-API' SKIP RETURN-VALUE SKIP CAN-FIND(FIRST ROWERRORS) VIEW-AS ALERT-BOX.
+//LOG-MANAGER:WRITE-MESSAGE("ESSPF023A - CHAMA API" + CHR(10) + CHR(10)).
+
 
 RUN pi-erros-integr.
 IF RETURN-VALUE = "NOK" THEN DO:
@@ -228,7 +270,11 @@ IF RETURN-VALUE = "NOK" THEN DO:
     RETURN "NOK".
 END.
 
-LOG-MANAGER:WRITE-MESSAGE("esspf023a.p - FIM" +  CHR(10)).
+//MESSAGE 'ERROS-INTEGR' SKIP RETURN-VALUE SKIP CAN-FIND(FIRST ROWERRORS) VIEW-AS ALERT-BOX.
+//LOG-MANAGER:WRITE-MESSAGE("ESSPF023A - ERROS-INTEGR" + CHR(10) + CHR(10)).
+
+
+//LOG-MANAGER:WRITE-MESSAGE("esspf023a.p - FIM" +  CHR(10)).
 
 /* run pi-finalizar in h-acomp. */
 RETURN "OK".
@@ -238,7 +284,7 @@ PROCEDURE pi-valida-entrada.
         RUN piErro(INPUT 17006,
                    INPUT "ERRO: ParÉmetros de estabelecimento n∆o encontrado.",
                    INPUT "ERRO: ParÉmetros de estabelecimento n∆o encontrado.").
-        RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
+        //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
         ASSIGN l-erro = YES.
     END.
 
@@ -246,7 +292,7 @@ PROCEDURE pi-valida-entrada.
         RUN piErro(INPUT 17006,
                    INPUT "ERRO: N£mero do pedido deve estar preenchido.",
                    INPUT "ERRO: N£mero do pedido deve estar preenchido.").
-        RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
+        //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
         ASSIGN l-erro = YES.
     END.
 
@@ -254,7 +300,7 @@ PROCEDURE pi-valida-entrada.
         RUN piErro(INPUT 17006,
                    INPUT "ERRO: Valor do pedido deve ser maior que zero. Valor recebido: " + STRING(ttPayments.vlPedido),
                    INPUT "ERRO: Valor do pedido deve ser maior que zero.").
-        RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
+        //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
         ASSIGN l-erro = YES.
     END.
     
@@ -293,7 +339,7 @@ PROCEDURE pi-valida-entrada.
         RUN piErro(INPUT 17006,
                    INPUT "ERRO: Data do pagamento n∆o pode ser anterior Ö data do pedido. Datas recebidas: - DtPedido: " + STRING(v-dtPed,"99/99/9999") + " - DtPagto: " + STRING(v-dtPag,"99/99/9999"),
                    INPUT "ERRO: Data do pagamento n∆o pode ser anterior Ö data do pedido.").
-        RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
+        //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
         ASSIGN l-erro = YES.
     END.
 
@@ -331,7 +377,7 @@ PROCEDURE pi-carrega-params.
     ASSIGN c-caminho = "\\192.168.0.131\datasul\Teste\ERP\quarentena\Spf\logIntegracao\esint023a" + STRING(TODAY,"99-99-9999") + "_" + REPLACE(STRING(TIME,"HH:MM:SS"),":","") + ".txt".
     OUTPUT TO VALUE (c-caminho).
     */
-    
+    /*
     LOG-MANAGER:WRITE-MESSAGE("esspf023a.p - PARAMETROS :"                             + CHR(10) +
                               "cEstab                   : " + cEstab                    + CHR(10) +
                               "c_cod_espec_docto        : " + c_cod_espec_docto         + CHR(10) +
@@ -350,6 +396,7 @@ PROCEDURE pi-carrega-params.
                               "c_cod_cart_bcia          : " + c_cod_cart_bcia           + CHR(10) +
                               "c-cod-refer              : " + c-cod-refer               + CHR(10) + CHR(10) 
                               ).
+  */
     /*OUTPUT CLOSE.*/
 
     IF INT(SUBSTRING(c-sequencia-refer,4,2)) <> DAY(TODAY) OR
@@ -418,6 +465,7 @@ PROCEDURE pi-carrega-tts.
                tt_integr_acr_lote_impl.tta_ind_orig_tit_acr    = "ACREMS50"
                i-cont-seq = 0.
     
+        /*
         LOG-MANAGER:WRITE-MESSAGE("esspf023a.p - LOTE:"                            + CHR(10) +
                                   "cod_empresa        : " + tt_integr_acr_lote_impl.tta_cod_empresa          + CHR(10) +
                                   "cod_estab          : " + tt_integr_acr_lote_impl.tta_cod_estab            + CHR(10) +
@@ -426,7 +474,7 @@ PROCEDURE pi-carrega-tts.
                                   "dat_transacao      : " + STRING(tt_integr_acr_lote_impl.tta_dat_transacao      )  + CHR(10) +
                                   "ind_orig_tit_acr   : " + STRING(tt_integr_acr_lote_impl.tta_ind_orig_tit_acr)     + CHR(10) + CHR(10)
                                   ).
-
+        */
 
         assign r-recid-lote = recid(tt_integr_acr_lote_impl).
 
@@ -488,7 +536,7 @@ ttPayments.dtPagamento
            tt_integr_acr_item_lote_impl_8.tta_log_liquidac_autom         = NO /*Liquidac Autom?tica*/
            .
 
-
+    /*
     LOG-MANAGER:WRITE-MESSAGE("esspf023a.p - ITEM LOTE" + CHR(10) +
                               "tt_integr_acr_item_lote_impl_8.ttv_rec_lote_impl_tit_acr     : " + STRING(tt_integr_acr_item_lote_impl_8.ttv_rec_lote_impl_tit_acr     )  + CHR(10) +
                               "tt_integr_acr_item_lote_impl_8.ttv_rec_item_lote_impl_tit_acr: " + STRING(tt_integr_acr_item_lote_impl_8.ttv_rec_item_lote_impl_tit_acr)  + CHR(10) +
@@ -511,6 +559,7 @@ ttPayments.dtPagamento
                               "tt_integr_acr_item_lote_impl_8.tta_val_cotac_indic_econ      : " + STRING(tt_integr_acr_item_lote_impl_8.tta_val_cotac_indic_econ      )  + CHR(10) +
                               "tt_integr_acr_item_lote_impl_8.tta_des_text_histor           : " + STRING(tt_integr_acr_item_lote_impl_8.tta_des_text_histor           )  + CHR(10) + CHR(10)
                              ).
+     */
     /*
     if ttPayments.i_forma_pagto = 2 /*Cart?o de D?bito*/ or ttPayments.i_forma_pagto = 3 /*Cart?o de Cr?dito*/ then
 
@@ -534,6 +583,7 @@ ttPayments.dtPagamento
            tt_integr_acr_aprop_ctbl_pend.tta_cod_plano_ccusto           = c_cod_plano_ccusto
            tt_integr_acr_aprop_ctbl_pend.tta_cod_ccusto                 = c_cod_ccusto.
 
+    /*
     LOG-MANAGER:WRITE-MESSAGE("esspf023a.p - APROP"  + CHR(10) +
                               "rec_item_lote_impl_tit_acr: " + STRING(tt_integr_acr_aprop_ctbl_pend.ttv_rec_item_lote_impl_tit_acr)  + CHR(10) +
                               "cod_unid_negoc            : " + STRING(tt_integr_acr_aprop_ctbl_pend.tta_cod_unid_negoc            )  + CHR(10) +
@@ -548,6 +598,8 @@ ttPayments.dtPagamento
                               "cod_plano_ccusto          : " + STRING(tt_integr_acr_aprop_ctbl_pend.tta_cod_plano_ccusto          )  + CHR(10) +
                               "cod_ccusto                : " + STRING(tt_integr_acr_aprop_ctbl_pend.tta_cod_ccusto                )  + CHR(10) + CHR(10)
                               ).
+    */
+
     /*release tt_integr_acr_aprop_ctbl_pend.*/
     /*end.*/
 
@@ -564,13 +616,20 @@ PROCEDURE pi-chama-api.
 
     run prgfin/acr/acr900zi.py persistent set v_hdl_programa.
 
+
+/*
     LOG-MANAGER:WRITE-MESSAGE("esspf023a.p - Antes da chamada da API" +  CHR(10) +
                                                  string(p_cod_matriz_trad_org_ext) + CHR(10) +
                                                  string(p_log_atualiza_refer_acr ) + CHR(10) +
                                                  string(p_log_assume_dat_emis    ) + CHR(10) +
                                                  "HANDLE v_hdl_programa :" + STRING(VALID-HANDLE(v_hdl_programa)) + CHR(10) + CHR(10) 
-                              ).
 
+                            ).
+*/
+
+   IF ldebuga then
+       message 'chamada api' view-as alert-box warning.
+                        
     run pi_main_code_integr_acr_new_9 in v_hdl_programa (input 11,
                                                          input p_cod_matriz_trad_org_ext,
                                                          input p_log_atualiza_refer_acr,
@@ -579,7 +638,44 @@ PROCEDURE pi-chama-api.
                                                          input-output table tt_integr_acr_item_lote_impl_8,
                                                          input table tt_integr_acr_aprop_relacto_2).
     
-    LOG-MANAGER:WRITE-MESSAGE("esspf023a.p - AP‡S da chamada da API" +  CHR(10)).
+
+
+    output to c:\temp\executa-api-script.txt.
+    
+        put unformatted 'Matriz: '  p_cod_matriz_trad_org_ext skip
+                        'Atualiza REf: 'p_log_atualiza_refer_acr  skip
+                        'Assume Data: ' p_log_assume_dat_emis skip.
+
+
+        for each tt_integr_acr_repres_comis_2 no-lock.
+        
+            disp tt_integr_acr_repres_comis_2 with 1 col width 300.
+        
+        end.
+
+        for each tt_integr_acr_item_lote_impl_8 no-lock.
+        
+            disp tt_integr_acr_item_lote_impl_8 except tta_des_text_histor with 1 col width 300.
+        
+        end.
+
+        for each tt_integr_acr_aprop_relacto_2 no-lock.
+        
+            disp tt_integr_acr_aprop_relacto_2 with 1 col width 300.
+        
+        end.
+
+        for each tt_log_erros_atualiz no-lock.
+            DISP tt_log_erros_atualiz WITH 1 COL WIDTH 300.
+        end.
+
+    
+    output close.
+     
+    /* 
+  LOG-MANAGER:WRITE-MESSAGE("esspf023a.p - AP‡S da chamada da API" +  CHR(10)).
+  */
+  
     delete procedure v_hdl_programa.
 
 END PROCEDURE.
@@ -588,7 +684,7 @@ END PROCEDURE.
 PROCEDURE pi-erros-integr.
 
 
-    LOG-MANAGER:WRITE-MESSAGE("esspf023A.p - pi-erros-integr - ACR? " + STRING(CAN-FIND (FIRST tt_log_erros_atualiz)) + CHR(10) + CHR(10) ).
+    //LOG-MANAGER:WRITE-MESSAGE("esspf023A.p - pi-erros-integr - ACR? " + STRING(CAN-FIND (FIRST tt_log_erros_atualiz)) + CHR(10) + CHR(10) ).
     /*
     MESSAGE "pi-erros-integr - ACR" SKIP
             CAN-FIND (FIRST tt_log_erros_atualiz NO-LOCK).
@@ -645,10 +741,10 @@ PROCEDURE pi-erros-integr.
             */
         end.
 
-        RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
+        //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Erro").
     END.
     ELSE DO:
-        RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Sucesso").
+        //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "dev.progress4gl@gmail.com", "Sucesso").
         /*MESSAGE "piEnviaNotificacaoUsuario: dev.progress4gl@gmail.com".*/
     END.
 END PROCEDURE.
@@ -842,7 +938,7 @@ cHora = STRING(TIME, "HH:MM:SS").
 SESSION:DEBUG-ALERT = YES.
 
 ASSIGN LOG-MANAGER:LOGFILE-NAME     = 
-    "c:\temp\clientlog23_"  + 
+    "c:\temp\clientlog23_esspf023a"  + 
     STRING(YEAR(today) , "9999") + 
     STRING(MONTH(today) , "9999") + 
     STRING(DAY(today) , "9999") + 
@@ -853,9 +949,6 @@ ASSIGN LOG-MANAGER:LOGFILE-NAME     =
 
 ASSIGN LOG-MANAGER:LOGGING-LEVEL = 4
        LOG-MANAGER:LOG-ENTRY-TYPES = "4GLMessages,4GLTrace,FileID".
-/* ASSIGN LOG-MANAGER:LOG-ENTRY-TYPES = "4GLTrace".  */
-/* ASSIGN LOG-MANAGER:LOGGING-LEVEL = 2            . */
-
 
 /*                                                     */
 /* -clientlog  mylog.lg -logginglevel 2 -logentrytypes */
