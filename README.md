@@ -27,6 +27,7 @@ $ cd <diretorio_do_repositorio>
 ## Equipe :
  - Cleberson Silva 
  - Bruno Hallais
+ - Mateus Aranha
  - Murillo Masnelo
  
 ## Scrum Master:
