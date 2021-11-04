@@ -16,12 +16,14 @@
 
 {utp/ut-api-action.i pi-create POST /~*}
 {utp/ut-api-action.i pi-update PUT /~*}
-{utp/ut-api-action.i pi-getAll GET /~*}
+{utp/ut-api-action.i pi-get    GET /~*}
+{utp/ut-api-action.i pi-getAll GET /~*/~*}
 {utp/ut-api-notfound.i}
 
 
 {cdp/api/v1/apicustomer.i}
 {cdp/api/v1/apicustomerVar.i}
+
 
 /* ********************  Preprocessor Definitions  ******************** */
 
@@ -35,16 +37,12 @@ PROCEDURE pi-create:
     DEFINE INPUT  PARAMETER jsonInput  AS JsonObject NO-UNDO.
     DEFINE OUTPUT PARAMETER jsonOutput AS JsonObject NO-UNDO.
 
-    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\spf\logIntegracao\CriaCliente.txt") APPEND.
-        PUT UNFORMATTED "INICIO DA INTEGRACAO DE CLIENTES" SKIP.
-
     FIX-CODEPAGE(jsonRecebido) = "UTF-8".
 
     ASSIGN oRequestParser  = NEW JsonAPIRequestParser(jsonInput)
            jsonRecebido    = oRequestParser:getPayloadLongChar()
            i-prox-numero   = NEXT-VALUE(seq_import)
            cCnpjCpf        = "".
-
 
     oJsonArrayMain = jsonInput:GetJsonObject("payload":U):GetJsonArray("customer":U).
 
@@ -56,8 +54,7 @@ PROCEDURE pi-create:
             LEAVE.
         END.
     END.
-
-    MESSAGE SUBSTITUTE("PROXIMO NUMERO &1", i-prox-numero).
+    
     
     CREATE  es-api-import-spf.                                            
     ASSIGN  es-api-import-spf.id-movto          = i-prox-numero 
@@ -72,7 +69,7 @@ PROCEDURE pi-create:
 
 
     RUN pi-gera-status (cCnpjCpf,                
-                        "Success OK",                          
+                        "Successfully received",                         
                         "").                                
                                                             
     /* -------- Grava retorno ------*/                      
@@ -98,8 +95,6 @@ PROCEDURE pi-update:
     DEFINE INPUT  PARAMETER jsonInput  AS JsonObject NO-UNDO.
     DEFINE OUTPUT PARAMETER jsonOutput AS JsonObject NO-UNDO.
 
-    OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\spf\logIntegracao\alteraCliente.txt").
-
      FIX-CODEPAGE(jsonRecebido) = "UTF-8".
 
     ASSIGN oRequestParser  = NEW JsonAPIRequestParser(jsonInput)
@@ -117,8 +112,6 @@ PROCEDURE pi-update:
             LEAVE.
         END.
     END.
-
-    MESSAGE SUBSTITUTE("PROXIMO NUMERO &1", i-prox-numero).
 
     
     CREATE  es-api-import-spf.                                            
@@ -187,6 +180,55 @@ PROCEDURE pi-getAll:
 
 END PROCEDURE.
 
+
+/*----------------------------------------------------------------------
+ Purpose: Retorna cliente conforme parametro informado pelo shopify
+------------------------------------------------------------------------*/
+PROCEDURE pi-get:
+    DEFINE INPUT  PARAMETER jsonInput  AS JsonObject NO-UNDO.
+    DEFINE OUTPUT PARAMETER jsonOutput AS JsonObject NO-UNDO.
+    
+
+    DEFINE VARIABLE oQueryParams AS JsonObject  NO-UNDO.
+    DEFINE VARIABLE aPathParams  AS JsonArray   NO-UNDO.
+    DEFINE VARIABLE cShopifyId   AS CHARACTER   NO-UNDO.
+    
+    EMPTY TEMP-TABLE RowErrors.
+
+    oQueryParams   = JsonInput:getJsonObject("queryParams").
+
+    IF oQueryParams:HAS("shopifyId") THEN
+        ASSIGN cShopifyId = oQueryParams:GetJsonArray("shopifyId"):getCharacter(1).
+
+         
+
+
+    FIND FIRST spf-emitente WHERE spf-emitente.shopify-id = cShopifyId NO-LOCK NO-ERROR.
+    IF NOT AVAIL spf-emitente THEN
+    DO:
+
+        RUN pi-gera-status (cShopifyId,  
+                            "Unregistered Customer",  
+                            "").  
+    END.
+    ELSE 
+    DO:
+        RUN pi-gera-status (cShopifyId,  
+                            "Registered Customer",  
+                            ""). 
+    END.
+
+    /* -------- Grava retorno ------*/       
+    jsonRetorno = NEW JsonArray().  
+    jsonRetorno:Read(TEMP-TABLE ttRetorno:HANDLE).
+                                                            
+    RUN createJsonResponse(INPUT jsonRetorno,               
+                           INPUT TABLE RowErrors,           
+                           INPUT FALSE,                     
+                           OUTPUT jsonOutput).
+
+END PROCEDURE.
+
 /*----------------------------------------------------------------------
  Purpose: Efetua a cria‡Æo dos status de erro
 ------------------------------------------------------------------------*/
@@ -199,7 +241,6 @@ PROCEDURE pi-gera-status:
 
     CREATE ttRetorno.
     ASSIGN ttRetorno.chave          = pChave
-           ttRetorno.situacao       = pSituacao
-           ttRetorno.descricao      = pMensagem.
+           ttRetorno.situacao       = pSituacao.
     
 END PROCEDURE.
