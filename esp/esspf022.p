@@ -75,12 +75,14 @@ MESSAGE "COPIANDO O OBJETO PARA VARIAVEL DO TIPO MEMPTR".
 COPY-LOB es-api-import-spf.c-json TO mJson.  
 COPY-LOB mJson TO cLongJson NO-CONVERT.  
 
-MESSAGE "CRIANDO UM OBJETO DO TIPO MODEL PARSER".
+MESSAGE "CRIANDO UM OBJETO DO TIPO MODEL PARSER !!".
 
 
 myParser = NEW ObjectModelParser().                              
 pJsonInput = CAST(myParser:Parse(cLongJson),JsonObject).         
 oJsonArrayMain = pJsonInput:GetJsonArray("order":U).  
+
+MESSAGE "LEU ARRAY".
 
 
 DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
@@ -89,30 +91,71 @@ DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
 
    oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
 
-   if oJsonObjectMain:Has("customerCNPJ") THEN ASSIGN ttPedido.cnpjEmitente = oJsonObjectMain:GetCharacter(TRIM("customerCNPJ"))  NO-ERROR. 
-   if oJsonObjectMain:Has("orderNumber") THEN ASSIGN ttPedido.pedidoCliente = oJsonObjectMain:GetCharacter(TRIM("orderNumber "))  NO-ERROR. 
+   if oJsonObjectMain:Has("customerId") THEN ASSIGN ttPedido.cnpjEmitente = oJsonObjectMain:GetCharacter(TRIM("customerId"))  NO-ERROR. 
+   
+MESSAGE "LEU CNPJ".
+   
+   if oJsonObjectMain:Has("orderNumber") THEN ASSIGN ttPedido.pedidoCliente = oJsonObjectMain:GetCharacter(TRIM("orderNumber"))  NO-ERROR. 
+   
+   if error-status:error then do:
+   
+       if oJsonObjectMain:Has("orderNumber") THEN ASSIGN ttPedido.pedidoCliente = STRING(oJsonObjectMain:GetCharacter(TRIM("orderNumber")))  NO-ERROR. 
+   
+   end.
+
+MESSAGE "LEU NUMBER".
+   
+   if oJsonObjectMain:Has("orderId") THEN ASSIGN ttPedido.pedidoShopify = oJsonObjectMain:GetCharacter(TRIM("orderId"))  NO-ERROR. 
+
+MESSAGE "LEU ID".
+   
+   if oJsonObjectMain:Has("paymentDate") THEN ASSIGN ttPedido.dataPagamento = oJsonObjectMain:GetCharacter(TRIM("paymentDate"))  NO-ERROR. 
+MESSAGE "LEU PAY DATE".
+   
 
    IF oJsonObjectMain:Has("ItemOrderList") THEN 
    DO: 
+   
+    MESSAGE "TEM ITEM".
+   
          
          oJsonArraySec = oJsonObjectMain:GetJsonArray("ItemOrderList").
          
+        MESSAGE "LEU ARRAY ITEM".
+         
+         
          DO iCountSec = 1 TO oJsonArraySec:LENGTH:
+         
+                 MESSAGE "LOOP ARRAY ITEM".
+
+         
             oJsonObjectSec =  oJsonArraySec:GetJsonObject(iCountSec).           
+            
+                    MESSAGE "LEU OBJETO ARRAY ITEM".
+
             
             CREATE ttItensPedido.
             ASSIGN ttItensPedido.nrSeqPed = iCountSec.
+            
             if oJsonObjectSec:Has("ItemCode") THEN ASSIGN	ttItensPedido.codigoItem  = oJsonObjectSec:GetCharacter("ItemCode") NO-ERROR.
             
-            if oJsonObjectSec:Has("Quantity" ) THEN ASSIGN	ttItensPedido.qtdPedida   = oJsonObjectSec:GetInteger("Quantity"  ) NO-ERROR.
+                       MESSAGE "LEU ITEM".
+
+            if oJsonObjectSec:Has("Quantity" ) THEN ASSIGN	ttItensPedido.qtdPedida   = oJsonObjectSec:GetInteger("Quantity") NO-ERROR.
+
+                       MESSAGE "QTD".
             
+            if oJsonObjectSec:Has("Price"    ) THEN ASSIGN	ttItensPedido.precoUnit   = oJsonObjectSec:GetDecimal("Price") NO-ERROR.
             
-            if oJsonObjectSec:Has("Price"    ) THEN ASSIGN	ttItensPedido.precoUnit   = oJsonObjectSec:GetDecimal("Price"     ) NO-ERROR.
+                       MESSAGE "PRE€O".
             
 
             
          END.  
          
+         
+MESSAGE "LEU ITENS".
+             
          /* Rotina de sa¡da da valida‡Æo */
          IF ERROR-STATUS:ERROR THEN DO:
          

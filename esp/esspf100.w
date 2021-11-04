@@ -127,7 +127,7 @@ DEFINE VARIABLE cb_saida AS INTEGER FORMAT "->,>>>,>>9":U INITIAL 999
      DROP-DOWN-LIST
      SIZE 33 BY 1 NO-UNDO.
 
-DEFINE VARIABLE cb_sistema AS INTEGER FORMAT "->,>>>,>>9":U INITIAL 1 
+DEFINE VARIABLE cb_sistema AS INTEGER FORMAT ">,>>>,>>9":U INITIAL 1 
      LABEL "Sistema" 
      VIEW-AS COMBO-BOX INNER-LINES 5
      LIST-ITEM-PAIRS "Item 1",1
@@ -606,8 +606,13 @@ ASSIGN LOG-MANAGER:LOGFILE-NAME     =
     SUBSTRING(chora, 7, 2) + ".txt"
     .
 
+
+LOG-MANAGER:LOGGING-LEVEL = 4.
+LOG-MANAGER:LOG-ENTRY-TYPES = "4GLMessages,4GLTrace,DB.Connects,DynObjects.DB,DynObjects.XML,DynObjects.Other,DynObjects.CLASS,DynObjects.UI,FileID,ProEvents.UI.CHAR,ProEvents.UI.COMMAND,ProEvents.Other,SAX".
+/*
+ASSIGN LOG-MANAGER:LOGGING-LEVEL = 4            .
 ASSIGN LOG-MANAGER:LOG-ENTRY-TYPES = "4GLTrace".
-ASSIGN LOG-MANAGER:LOGGING-LEVEL = 2            .
+*/
 
 
 
@@ -805,15 +810,15 @@ DEFINE VARIABLE cSistema AS CHARACTER   NO-UNDO.
 
 
 
-      cb_sistema:DELETE(1) NO-ERROR.
-
+      
+      cb_sistema:DELETE(cb_sistema:LIST-ITEM-PAIRS) NO-ERROR.
       FOR EACH es-api-app-spf NO-LOCK BREAK BY es-api-app-spf.cd-sistema:
           cb_sistema:ADD-LAST(es-api-app-spf.des-sistema,  es-api-app-spf.cd-sistema).
           IF FIRST-OF(es-api-app-spf.cd-sistema) THEN 
               ASSIGN cSistema = STRING( es-api-app-spf.cd-sistema)    .
       END.
-
-      cb_sistema:SCREEN-VALUE = cSistema.
+      
+      cb_sistema:SCREEN-VALUE = cSistema NO-ERROR.
 
       
       //cb_entrada:DELETE(1) NO-ERROR.
@@ -822,7 +827,7 @@ DEFINE VARIABLE cSistema AS CHARACTER   NO-UNDO.
           BREAK BY es-api-param-spf.cd-tipo-integr:
           cb_entrada:ADD-LAST(es-api-param-spf.des-tipo-integr,  es-api-param-spf.cd-tipo-integr).
       END.
-      cb_entrada:ADD-LAST("Nenhum", 0).
+      cb_entrada:ADD-LAST("Nenhum", 0) NO-ERROR.
       
       //cb_saida:DELETE(1) NO-ERROR.
       FOR EACH es-api-param-spf NO-LOCK 
@@ -830,7 +835,7 @@ DEFINE VARIABLE cSistema AS CHARACTER   NO-UNDO.
           BREAK BY es-api-param-spf.cd-tipo-integr:
           cb_saida:ADD-LAST(es-api-param-spf.des-tipo-integr,  es-api-param-spf.cd-tipo-integr).
       END.
-      cb_saida:ADD-LAST("Nenhum", 0).
+      cb_saida:ADD-LAST("Nenhum", 0) NO-ERROR.
 
     
     /* Dispatch standard ADM method.                             */

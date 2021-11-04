@@ -35,7 +35,7 @@ FUNCTION fncAgendaAtiva RETURN LOGICAL
 
 
 /* RUN abrirLog("//fenix/ERP/camil/teste-verde/especificos/lasf/roboSFA/esspf001irp_log_" + stamp() + ".txt"). */
-LOG-MANAGER:WRITE-MESSAGE("In¡cio Processo - esspf100EIRP - V.2.5 - MERGE LOGISTICA - Exporta‡Æo").
+LOG-MANAGER:WRITE-MESSAGE("In¡cio Processo - ESSPF100ERP - V.2.6 - MACMILLAN - Exporta‡Æo").
 
 /* RUN piNewCarregaPend. */
 
@@ -63,10 +63,13 @@ PROCEDURE piNewCarregaPend:
         LOG-MANAGER:WRITE-MESSAGE("es-api-param-spf.ind-tipo-trans   " + tratarString(STRING(es-api-param-spf.ind-tipo-trans  )) ).
         LOG-MANAGER:WRITE-MESSAGE("es-api-param-spf.cd-sistema       " + tratarString(STRING(es-api-param-spf.cd-sistema      )) ).
         LOG-MANAGER:WRITE-MESSAGE("es-api-param-spf.cd-tipo-integr   " + tratarString(STRING(es-api-param-spf.cd-tipo-integr  )) ).
-         
-        IF es-api-param-spf.tip-integracao = 2 
-            THEN
+        LOG-MANAGER:WRITE-MESSAGE("es-api-param-spf.tip-integracao   " + tratarString(STRING(es-api-param-spf.tip-integracao  )) ).
+
+        IF es-api-param-spf.tip-integracao = 2 THEN
         DO:
+            LOG-MANAGER:WRITE-MESSAGE(SUBSTITUTE("Verificando pendencias - Tipo Integr &1 - Programa Executado &2",
+                                                 es-api-param-spf.tip-integracao, es-api-param-spf.programa-integr)).
+    
 
 /*             MESSAGE '1'                                   */
 /*                 VIEW-AS ALERT-BOX INFORMATION BUTTONS OK. */
@@ -74,6 +77,9 @@ PROCEDURE piNewCarregaPend:
              RUN VALUE( es-api-param-spf.programa-integr ) (OUTPUT c-Erro) NO-ERROR.
 /*              MESSAGE '2'                                   */
 /*                  VIEW-AS ALERT-BOX INFORMATION BUTTONS OK. */
+
+             LOG-MANAGER:WRITE-MESSAGE(SUBSTITUTE("Verificando pendencias - Tipo Integr &1 - Programa Executado &2 - Status do Erro &3",
+                                                 es-api-param-spf.tip-integracao, es-api-param-spf.programa-integr,c-Erro)).
 
         END.
 
@@ -128,7 +134,33 @@ PROCEDURE piNewCarregaPend:
                 LEAVE proc-pend_1.
 
             END.
+            //Reprocessamento autom tico
+            proc-pend_2:
+            FOR EACH bf-es-api-export-spf 
+                WHERE bf-es-api-export-spf.cd-tipo-integr   = es-api-param-spf.cd-tipo-integr
+                  AND bf-es-api-export-spf.cod-status       = 2
+                  AND bf-es-api-export-spf.data-movto      >= DATETIME(TODAY - 30) 
+                NO-LOCK:
 
+                LOG-MANAGER:WRITE-MESSAGE("INI - Processando CD-TIPO-TRANS:" + STRING(bf-es-api-export-spf.cd-tipo-integr) 
+                                          + " Situa‡Æo:" + STRING(bf-es-api-export-spf.ind-situacao)
+                                          + " Status: " + STRING(bf-es-api-export-spf.cod-status) 
+                                          + " Chave:" + STRING(bf-es-api-export-spf.chave)
+                                          + " Transa‡Æo ativa:" + STRING(TRANSACTION)).
+
+                RUN pi-processa-transacao.
+                IF RETURN-VALUE = "_LOCKED" THEN
+                    NEXT proc-pend_2.
+
+                LOG-MANAGER:WRITE-MESSAGE("FIM - Processando CD-TIPO-TRANS:" + STRING(bf-es-api-export-spf.cd-tipo-integr) 
+                                          + " Situa‡Æo:" + STRING(bf-es-api-export-spf.ind-situacao)
+                                          + " Status: " + STRING(bf-es-api-export-spf.cod-status) 
+                                          + " Chave:" + STRING(bf-es-api-export-spf.chave)
+                                          + " Transa‡Æo ativa:" + STRING(TRANSACTION)).
+
+                LEAVE proc-pend_2.
+
+            END.
         END.
 
 
@@ -251,6 +283,7 @@ PROCEDURE pi-processa-transacao:
         END.
     END.
     ELSE DO:
+        LOG-MANAGER:WRITE-MESSAGE("Retornou sucesso ao executar a transacao " + string(es-api-export-spf.id-movto)) NO-ERROR.
         DO TRANSACTION:
             ASSIGN  es-api-export-spf.data-fim      = NOW
                     es-api-export-spf.ind-situacao  = 2
