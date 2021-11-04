@@ -1,7 +1,7 @@
 
 /*----------------------------------------------------------------------------------------------
     File        : ESSPF024.p
-    Purpose     : Interface de Integraï¿½ï¿½o TOTVS x Shopify
+    Purpose     : Interface de Integra‡Æo TOTVS x Shopify
     Description : Envio de informacoes da nota para shopify
     Author(s)   : 4Make Consultoria
     Created     : 18.10.2021
@@ -87,7 +87,7 @@ END.
 FOR FIRST es-api-export-spf WHERE ROWID(es-api-export-spf) = r-table NO-LOCK: END.
 IF NOT AVAIL es-api-export-spf THEN
 DO:
-    ASSIGN c-erro = "Registro Tabela de Nota Fiscal nï¿½o localizado. ".
+    ASSIGN c-erro = "Registro Tabela de Nota Fiscal nÆo localizado".
     RUN pi-deleta-objetos.
     RETURN "NOK":U.
 END.
@@ -98,14 +98,14 @@ FOR FIRST es-api-param-spf NO-LOCK
 END.
 IF NOT AVAIL es-api-param-spf THEN
 DO:
-    ASSIGN c-erro = SUBSTITUTE("Tipo de Integraï¿½ï¿½o &1 nï¿½o Encontrada", es-api-export-spf.cd-tipo-integr).
+    ASSIGN c-erro = SUBSTITUTE("Tipo de Integra‡Æo &1 nÆo Encontrada", es-api-export-spf.cd-tipo-integr).
     RETURN "NOK":U.
 END.
 
 FIND FIRST es-api-token-param-spf NO-LOCK WHERE es-api-token-param-spf.cod-sistema = es-api-param-spf.cd-sistema NO-ERROR.
 IF NOT AVAIL es-api-token-param-spf THEN
 DO:
-    ASSIGN c-erro = "TI - Informaï¿½ï¿½es de TOKEN nï¿½o parametrizadas no programa ESSPF300. ".
+    ASSIGN c-erro = "TI - Informa‡äes de TOKEN nÆo parametrizadas no programa ESSPF300.".
     RETURN "NOK":U.
 END.
 
@@ -155,10 +155,7 @@ RUN piPostJsonObj IN hAPI (INPUT oJsonObjMain, INPUT ROWID(es-api-param-spf),
 IF TEMP-TABLE RowErrors:HAS-RECORDS THEN 
 DO:
     FOR EACH RowErrors NO-LOCK:
-        IF c-erro = "" THEN
-            ASSIGN c-erro = string(RowErrors.ErrorNumber)  + " - " + RowErrors.ErrorDescription.
-        ELSE 
-            ASSIGN c-erro = c-erro + " | " + string(RowErrors.ErrorNumber)  + " - " + RowErrors.ErrorDescription.
+        ASSIGN c-erro = c-erro + string(RowErrors.ErrorNumber)  + " - " + RowErrors.ErrorDescription.
     END.
     RUN pi-deleta-objetos.    
     RETURN "NOK":U.
@@ -187,7 +184,7 @@ PROCEDURE piGravaTTNotas:
                AND nota-fiscal.nome-ab-cli = ped-venda.nome-abrev NO-LOCK NO-ERROR.
         IF NOT AVAIL nota-fiscal THEN
         DO:
-            ASSIGN pErro = SUBSTITUTE("Nï¿½o Encontado Nota Fiscal, para Pedido de Venda &1/&2",ped-venda.nome-abrev,ped-venda.nr-pedcli).
+            ASSIGN pErro = SUBSTITUTE("NÆo Encontado Nota Fiscal, para Pedido de Venda &1/&2",ped-venda.nome-abrev,ped-venda.nr-pedcli).
             RETURN "NOK":U.
         END.
 
@@ -214,7 +211,7 @@ PROCEDURE pi-deleta-objetos:
         DELETE OBJECT oJsonArrayMain  NO-ERROR.
 
 
-    LOG-MANAGER:WRITE-MESSAGE(">>>Imprimindo variavel de erro"  + c-erro) NO-ERROR.
+    MESSAGE "Imprimindo variavel de erro" c-erro.
     
 END PROCEDURE.
 

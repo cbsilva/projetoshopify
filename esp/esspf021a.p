@@ -1,9 +1,9 @@
 /*----------------------------------------------------------------------------------------------/
  Programa..: esspf0021.p
- Objetivo..: Interface Integraï¿½ï¿½o Clientes SHOPIFY - Importaï¿½ï¿½o
+ Objetivo..: Interface Integra‡Æo Clientes SHOPIFY - Importa‡Æo
  Data......: 27/07/2021
  Autor.....: 4Make Consultoria
- Versï¿½o....: 2.000.001
+ VersÆo....: 2.000.001
 -----------------------------------------------------------------------------------------------*/
 
 
@@ -73,12 +73,12 @@ FUNCTION fnNomeAbrev RETURN CHARACTER (INPUT pNome AS CHAR):
 
     ASSIGN novoNome = REPLACE(REPLACE(REPLACE(REPLACE(pNome, ' dos ', ' '), ' da ', ' '), ' de ', ' '), ' do ', ' ').
 
-    //Concatena iniciais dos nomes/sobrenomes (sem contar o ï¿½ltimo sobrenome)
+    //Concatena iniciais dos nomes/sobrenomes (sem contar o £ltimo sobrenome)
     DO iCount = 1  TO NUM-ENTRIES(novoNome, ' ') - 1:
         ASSIGN iniciais = iniciais + SUBSTRING(ENTRY(iCount, novoNome, ' '), 1, 1).
     END.
 
-    //Pega ï¿½ltimo sobrenome
+    //Pega £ltimo sobrenome
     ASSIGN ultSobrenome = ENTRY(NUM-ENTRIES(novoNome, ' '), novoNome, ' ').
 
     RETURN iniciais + ' ' + ultSobrenome.
@@ -103,7 +103,7 @@ IF NOT VALID-HANDLE(h-boad098) THEN
 FIND FIRST es-api-param-cliente-spf NO-LOCK NO-ERROR.
 IF NOT AVAIL es-api-param-cliente-spf THEN
 DO:
-    RUN piErro("Parï¿½metro do cliente nï¿½o cadastrado no ESSPF016").
+    RUN piErro("Parƒmetro do cliente nÆo cadastrado no ESSPF016").
     RUN pi-delete-object.
     RETURN "NOK":U.
 END.
@@ -132,7 +132,7 @@ PROCEDURE piAlteraCliente:
     IF RETURN-VALUE = "NOK" THEN 
     DO:
 
-       PUT "OCORREU ERRO NA VALIDAï¿½ï¿½O DO CLIENTE" SKIP.
+       PUT "OCORREU ERRO NA VALIDA€ÇO DO CLIENTE" SKIP.
       //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").  
       RETURN "NOK":U.
    END.
@@ -161,13 +161,6 @@ PROCEDURE piAlteraCliente:
                     tt-emitente.cep-cob          = ttCustomer.cep
                     tt-emitente.r-rowid          = ROWID(emitente).
     
-          IF tt-emitente.pais = 'Brazil' THEN
-              ASSIGN tt-emitente.pais = 'Brasil'.
-
-          IF tt-emitente.identific = 2 THEN
-              ASSIGN tt-emitente.Nat-operacao  = es-api-param-cliente-spf.nat-operacao 
-                     tt-emitente.identific     = 3. //Ambos
-    
           RUN openQuery      IN h-boad098 (INPUT 1).
           RUN validateUpdate IN h-boad098 (INPUT TABLE tt-emitente,
                                            INPUT tt-emitente.r-rowid,
@@ -186,12 +179,10 @@ PROCEDURE piAlteraCliente:
              RUN pi-AtualizaEMS5.
              IF RETURN-VALUE = "NOK" THEN 
              DO:
-                 PUT UNFORMATTED "OCORREU ERRO NA GERAï¿½ï¿½O DO EMITENTE NO EMS5" SKIP.
-                //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").  
-
-                 RETURN "NOK":U.
+                 PUT UNFORMATTED "OCORREU ERRO NA GERA€ÇO DO EMITENTE NO EMS5" SKIP.
+                //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").          
              END.
-             //RETURN "OK":U.
+             RETURN "NOK":U.
           END.            
        END.
        RETURN "OK":U.
@@ -210,7 +201,7 @@ PROCEDURE piCriaCliente:
    IF RETURN-VALUE = "NOK" THEN 
    DO:
 
-       PUT "OCORREU ERRO NA VALIDAï¿½ï¿½O DO CLIENTE" SKIP.
+       PUT "OCORREU ERRO NA VALIDA€ÇO DO CLIENTE" SKIP.
       //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").  
       RETURN "NOK":U.
    END.
@@ -224,7 +215,7 @@ PROCEDURE piCriaCliente:
        ON ERROR  UNDO criaEmitente, RETURN "NOK"
        ON STOP   UNDO criaEmitente, RETURN "NOK":
 
-      /*-- recupera o cï¿½digo do cliente --*/
+      /*-- recupera o c¢digo do cliente --*/
       RUN cdp/cd9960.p (OUTPUT iCodEmitente).
 
       PUT UNFORMATTED "NOVO EMITENTE " + string(iCodEmitente) SKIP.
@@ -286,9 +277,6 @@ PROCEDURE piCriaCliente:
              tt-emitente.ins-banc                    = es-api-param-cliente-spf.ins-banc
              tt-emitente.cod-canal-venda             = es-api-param-cliente-spf.cod-canal-venda.
 
-          IF tt-emitente.pais = 'Brazil' THEN
-            tt-emitente.pais = 'Brasil'.
-
 
       RUN openQuery      IN h-boad098 (INPUT 1).                                   
       RUN validateCreate IN h-boad098 (INPUT TABLE tt-emitente,                                                       
@@ -298,7 +286,7 @@ PROCEDURE piCriaCliente:
 
       IF CAN-FIND(FIRST tt-bo-erro NO-LOCK) THEN 
       DO:
-          PUT UNFORMATTED "OCORREU ERRO NA GERAï¿½ï¿½O DO EMITENTE" SKIP.
+          PUT UNFORMATTED "OCORREU ERRO NA GERA€ÇO DO EMITENTE" SKIP.
           PUT UNFORMATTED tt-bo-erro.mensagem SKIP.
           FOR EACH tt-bo-erro NO-LOCK:
               RUN piErro(tt-bo-erro.mensagem).
@@ -311,7 +299,7 @@ PROCEDURE piCriaCliente:
          RUN pi-AtualizaEMS5.
          IF RETURN-VALUE = "NOK" THEN 
          DO:
-             PUT UNFORMATTED "OCORREU ERRO NA GERAï¿½ï¿½O DO EMITENTE NO EMS5" SKIP.
+             PUT UNFORMATTED "OCORREU ERRO NA GERA€ÇO DO EMITENTE NO EMS5" SKIP.
             //RUN piEnviaNotificacaoUsuario("suporte@macmillan.com.br", "cleberson.silva@4make.com.br", "Erro").  
             //UNDO criaEmitente, RETURN "NOK":U.  
          END.
@@ -327,8 +315,6 @@ END PROCEDURE.
 
 
 PROCEDURE pi-AtualizaEMS5:
-
-    LOG-MANAGER:WRITE-MESSAGE("### ROTINA PARA ATUALIZAR REGISTRO NO EMS5") NO-ERROR.
                    
    /************* Integracao 2.00 X 5.00 *****************/      
    IF CAN-FIND(funcao WHERE funcao.cd-funcao = "adm-cdc-ems-5.00"
@@ -336,8 +322,7 @@ PROCEDURE pi-AtualizaEMS5:
        AND funcao.log-1 = YES) THEN DO:                          
        FIND FIRST param-global NO-LOCK NO-ERROR.                 
        IF  param-global.log-2 = YES THEN DO:                     
-           VALIDATE emitente NO-ERROR.     
-           LOG-MANAGER:WRITE-MESSAGE("CHAMANDO CD1608") NO-ERROR.
+           VALIDATE emitente NO-ERROR.                           
            RUN cdp/cd1608.p persistent set h-cd1608  
                             (INPUT tt-emitente.cod-emitente,     
                              INPUT tt-emitente.cod-emitente,     
@@ -353,7 +338,6 @@ PROCEDURE pi-AtualizaEMS5:
             
             IF CAN-FIND(FIRST tt_erros_conexao) THEN
             DO:
-                LOG-MANAGER:WRITE-MESSAGE("OCORRERAM ERROS AO INTEGRAR REGISTRO COM EMS5") NO-ERROR.
                 FOR EACH tt_erros_conexao NO-LOCK:
                     PUT UNFORMATTED tt_erros_conexao.mensagem SKIP.
                     RUN piErro(tt_erros_conexao.mensagem).                
@@ -365,8 +349,6 @@ PROCEDURE pi-AtualizaEMS5:
                 /*-- cria cd0705 --*/
                 RUN pi-loc-entr.
 
-                LOG-MANAGER:WRITE-MESSAGE("NENHUM ERRO ENCONTRADO NA ROTINA DE CREATE/UPDATE DE CLIENTES") NO-ERROR.
-
                 IF NOT CAN-FIND(FIRST spf-emitente WHERE spf-emitente.cod-emitente = tt-emitente.cod-emitente) THEN
                 DO: 
                     PUT UNFORMATTED "GERANDO TABELA AUXILIAR SPF-EMITENTE" SKIP.
@@ -376,9 +358,7 @@ PROCEDURE pi-AtualizaEMS5:
                 END.                                                                                    
             END.
        END.                                                      
-   END.
-
-   RETURN "OK":U.
+   END.                                                          
    /*********** Fim Integracao 2.00 X 5.00 ****************/ 
 
 END PROCEDURE.
@@ -406,33 +386,33 @@ PROCEDURE piValidaEmitente:
 
    IF ttCustomer.ShopifyID = "" THEN
    DO:
-      RUN piErro("ERRO: Cï¿½digo do Shopify nï¿½o informado.").
+      RUN piErro("ERRO: C¢digo do Shopify nÆo informado.").
       RETURN "NOK":U.
 
    END.
 
    IF ttCustomer.ShopifyID <> "" AND CAN-FIND(FIRST spf-emitente WHERE spf-emitente.shopify-id = ttCustomer.ShopifyID) AND NOT lUpdate THEN
    DO: 
-      RUN piErro(SUBSTITUTE("ERRO: Cï¿½digo do Shopify &1 jï¿½ registrado para outro emitente",ttCustomer.ShopifyID)).
+      RUN piErro(SUBSTITUTE("ERRO: C¢digo do Shopify &1 j  registrado para outro emitente",ttCustomer.ShopifyID)).
       RETURN "NOK":U.
 
    END.
 
    IF ttCustomer.RazaoSocial = "" THEN
    DO:
-      RUN piErro("ERRO: Razao social nï¿½o informada.").
+      RUN piErro("ERRO: Razao social nÆo informada.").
       RETURN "NOK":U.
    END.
 
    IF ttCustomer.endereco = "" THEN
    DO:
-      RUN piErro("ERRO: Endereï¿½o informado invï¿½lido.").
+      RUN piErro("ERRO: Endere‡o informado inv lido.").
       RETURN "NOK":U.
    END.
 
    IF ttCustomer.cidade = "" THEN
    DO:
-      RUN piErro("ERRO: Cidade nï¿½o informada.").
+      RUN piErro("ERRO: Cidade nÆo informada.").
       RETURN "NOK":U.
    END.
 
@@ -442,7 +422,7 @@ PROCEDURE piValidaEmitente:
           AND mguni.cidade.pais   = ttCustomer.pais NO-ERROR.
    IF NOT AVAIL mguni.cidade THEN
    DO:
-      RUN piErro(SUBSTITUTE("ERRO: Cidade &1 informada nï¿½o perntece ao Pais &2/Estado &3", 
+      RUN piErro(SUBSTITUTE("ERRO: Cidade &1 informada nÆo perntece ao Pais &2/Estado &3", 
                             ttCustomer.cidade, ttCustomer.pais, ttCustomer.estado)).
       RETURN "NOK":U.
    END.
@@ -450,7 +430,7 @@ PROCEDURE piValidaEmitente:
    FIND FIRST mgcad.pais WHERE pais.nome-pais = ttCustomer.pais NO-LOCK NO-ERROR.
    IF NOT AVAIL mgcad.pais THEN
    DO:
-      RUN piErro(SUBSTITUTE("ERRO: Pais &1 informado nï¿½o cadastrado.",ttCustomer.pais)).
+      RUN piErro(SUBSTITUTE("ERRO: Pais &1 informado nÆo cadastrado.",ttCustomer.pais)).
       RETURN "NOK":U.
    END.
 
@@ -460,12 +440,12 @@ PROCEDURE piValidaEmitente:
    NO-ERROR.
    IF NOT AVAIL mgcad.unid-feder THEN
    DO:
-      RUN piErro("ERRO: Unidade de federaï¿½ï¿½o nï¿½o cadastrada.").
+      RUN piErro("ERRO: Unidade de federa‡Æo nÆo cadastrada.").
       RETURN "NOK":U.
    END.
 
    IF LENGTH(REPLACE(ttCustomer.cep, '-', '')) <> 8 THEN DO:
-      RUN piErro("ERRO: CEP invï¿½lido.").
+      RUN piErro("ERRO: CEP inv lido.").
       RETURN "NOK":U.
   END.
 
@@ -475,7 +455,7 @@ PROCEDURE piValidaEmitente:
    RUN pi-trata-endereco IN h-cdapi704 (INPUT ttCustomer.endereco, OUTPUT c-rua, OUTPUT c-nro, OUTPUT c-comp).
    IF c-nro = "" THEN
    DO:
-      RUN piErro("ERRO: Endereï¿½o invï¿½lido.").
+      RUN piErro("ERRO: Endere‡o inv lido.").
       RETURN "NOK":U.
    END.
 
@@ -497,7 +477,7 @@ PROCEDURE piEnviaNotificacaoUsuario:
    DEFINE VARIABLE cDestino    AS CHAR NO-UNDO.
    DEFINE VARIABLE cRemetente  AS CHAR NO-UNDO.
    
-   /** rotina comentada, pois em nenhum dos servidores 192.168.0.131 e 134, estï¿½ funcionando corretamente.
+   /** rotina comentada, pois em nenhum dos servidores 192.168.0.131 e 134, est  funcionando corretamente.
    portanto esta rotina esta sendo suprimida, para garatir os testes dos demais requisitos
 
    run utp/utapi019.p persistent set h-utapi019.           
@@ -509,7 +489,7 @@ PROCEDURE piEnviaNotificacaoUsuario:
    END.
 
    
-   ASSIGN cAssunto  = "Integraï¿½ï¿½o de Clientes SHOPIFY"
+   ASSIGN cAssunto  = "Integra‡Æo de Clientes SHOPIFY"
           cDestino  = pDestino.
 
    IF pAcaoEmail = "SUCESSO" THEN
@@ -520,7 +500,7 @@ PROCEDURE piEnviaNotificacaoUsuario:
    END.
    ELSE
    DO:
-      ASSIGN cMensagem = SUBSTITUTE("Prezado(s), Informo que foram gerados, erros ao tentar integrar o cliente &1 - CPF/CNPJ &1, verifique o monitor de integraï¿½ï¿½o.", ttCustomer.RazaoSocial, ttCustomer.cnpj).
+      ASSIGN cMensagem = SUBSTITUTE("Prezado(s), Informo que foram gerados, erros ao tentar integrar o cliente &1 - CPF/CNPJ &1, verifique o monitor de integra‡Æo.", ttCustomer.RazaoSocial, ttCustomer.cnpj).
    END.
 
    CREATE tt-envio2.                                       
@@ -548,7 +528,7 @@ PROCEDURE piEnviaNotificacaoUsuario:
    DO:
       DELETE PROCEDURE h-utapi019.
 
-      RUN piErro("Houver erro ao enviar notificaï¿½ï¿½es").
+      RUN piErro("Houver erro ao enviar notifica‡äes").
       FOR EACH tt-erros:
          RUN piErro(SUBSTITUTE("&1 - &2", tt-erros.desc-erro)).      
       END.
@@ -567,7 +547,7 @@ PROCEDURE pi-loc-entr:
     FIND FIRST emitente WHERE emitente.cod-emitente = tt-emitente.cod-emitente EXCLUSIVE-LOCK NO-ERROR.
     IF AVAIL emitente THEN
     DO:
-        {utp/ut-liter.i Padrï¿½o} 
+        {utp/ut-liter.i PadrÆo} 
     
         assign c-cod-entrega        = trim(return-value)
                emitente.cod-entrega = c-cod-entrega.

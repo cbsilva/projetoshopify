@@ -66,7 +66,7 @@ DEFINE INPUT  PARAMETER phFiStatus      AS HANDLE      NO-UNDO.
 DEFINE INPUT  PARAMETER pAS             AS LOGICAL     NO-UNDO.
 
     IF LOG-MANAGER:LOGFILE-NAME     = "" OR LOG-MANAGER:LOGFILE-NAME     = ? THEN
-        RUN ativarClientLOg.
+    RUN ativarClientLOg.
 
     RUN abrirLog(SESSION:TEMP-DIR + "esspf100rp_log.txt").
     RUN gerarLog("Iniciado processo").
@@ -142,7 +142,7 @@ DEFINE INPUT  PARAMETER pAS             AS LOGICAL     NO-UNDO.
 
     RUN gerarLog("Processo conclu¡do").
     RUN atualizarStatus ("Processamento Conclu¡do").
-    //RUN desativar-clientlog.
+
 END PROCEDURE.
 
 
@@ -257,23 +257,14 @@ ASSIGN LOG-MANAGER:LOGFILE-NAME     =
     SUBSTRING(chora, 7, 2) + ".txt"
     .
 
-ASSIGN LOG-MANAGER:LOGGING-LEVEL = 4
-       LOG-MANAGER:LOG-ENTRY-TYPES = "4GLMessages,4GLTrace,FileID".
-/* ASSIGN LOG-MANAGER:LOG-ENTRY-TYPES = "4GLTrace".  */
-/* ASSIGN LOG-MANAGER:LOGGING-LEVEL = 2            . */
+ASSIGN LOG-MANAGER:LOG-ENTRY-TYPES = "4GLTrace".
+ASSIGN LOG-MANAGER:LOGGING-LEVEL = 2            .
 
 
 /*                                                     */
 /* -clientlog  mylog.lg -logginglevel 2 -logentrytypes */
 /* 4GLTrace                                            */
 
-
-END PROCEDURE.
-
-PROCEDURE desativar-clientlog.
-
-    ASSIGN SESSION:DEBUG-ALERT = NO.
-    LOG-MANAGER:CLOSE-LOG().
 
 END PROCEDURE.
 

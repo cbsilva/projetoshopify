@@ -28,20 +28,18 @@
 
 /* **********************  Internal Procedures  *********************** */
 /*----------------------------------------------------------------------
- Purpose: Efetua a cria‡Æo de um novo pedido
+ Purpose: Efetua a criaï¿½ï¿½o de um novo emitente
 ------------------------------------------------------------------------*/
 PROCEDURE pi-create:
     DEFINE INPUT  PARAMETER jsonInput  AS JsonObject NO-UNDO.
     DEFINE OUTPUT PARAMETER jsonOutput AS JsonObject NO-UNDO.    
 
-    //OUTPUT TO VALUE ("\\192.168.0.131\datasul\Teste\ERP\quarentena\Spf\logIntegracao\PED.txt") APPEND.
-    //    PUT UNFORMATTED "INICIO DA INTEGRACAO DE PEDIDOS" SKIP.
-
     FIX-CODEPAGE(jsonRecebido) = "UTF-8".
-    ASSIGN oRequestParser      = NEW JsonAPIRequestParser(jsonInput)
-           jsonRecebido        = oRequestParser:getPayloadLongChar()
-           i-prox-numero       = NEXT-VALUE(seq_import)
-           cNrPedido           = "".
+
+    ASSIGN oRequestParser  = NEW JsonAPIRequestParser(jsonInput)
+           jsonRecebido    = oRequestParser:getPayloadLongChar()
+           i-prox-numero   = NEXT-VALUE(seq_import)
+           cNrPedido       = "".
 
 
     oJsonArrayMain = jsonInput:GetJsonObject("payload":U):GetJsonArray("order":U).
@@ -49,21 +47,18 @@ PROCEDURE pi-create:
     DO iCountMain = 1 TO oJsonArrayMain:LENGTH:
         oJsonObjectMain =  oJsonArrayMain:GetJsonObject(iCountMain).
 
-        IF oJsonObjectMain:Has("orderNumber")   then do:
-            cNrPedido = REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("orderNumber"),".",""),"/",""),"-","")  NO-ERROR.
-            IF cNrPedido = "" THEN
-                cNrPedido = STRING(oJsonObjectMain:GetInteger("orderNumber")) NO-ERROR.
+        IF oJsonObjectMain:Has("OrderNumber")   then do:
+            cNrPedido = REPLACE(REPLACE(REPLACE(oJsonObjectMain:GetCharacter("OrderNumber"),".",""),"/",""),"-","")  NO-ERROR             .
             LEAVE.
         END.
     END.
-
 
     MESSAGE SUBSTITUTE("PROXIMO NUMERO &1", i-prox-numero).
     
     CREATE  es-api-import-spf.                                            
     ASSIGN  es-api-import-spf.id-movto          = i-prox-numero 
             es-api-import-spf.cd-tipo-integr    = 22 /*-- Importacao de Pedidos --*/   
-            es-api-import-spf.chave             = "DG" + cNrPedido     
+            es-api-import-spf.chave             = cNrPedido     
             es-api-import-spf.data-movto        = NOW                     
             es-api-import-spf.data-inicio       = NOW                     
             es-api-import-spf.data-fim          = ?                       
@@ -85,7 +80,7 @@ PROCEDURE pi-create:
                            INPUT FALSE,                     
                            OUTPUT jsonOutput).
 
-    //OUTPUT CLOSE.
+    OUTPUT CLOSE.
 
 END PROCEDURE.
 
