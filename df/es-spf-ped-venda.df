@@ -1,0 +1,49 @@
+ADD TABLE "es-spf-ped-venda"
+  AREA "Schema Area"
+  LABEL "Pedidos Venda Shopify"
+  DUMP-NAME "es-spf-ped-venda"
+
+ADD FIELD "nome-abrev" OF "es-spf-ped-venda" AS character 
+  FORMAT "X(12)"
+  INITIAL ""
+  LABEL "Cliente"
+  POSITION 2
+  MAX-WIDTH 24
+  ORDER 100
+
+ADD FIELD "nr-pedcli" OF "es-spf-ped-venda" AS character 
+  FORMAT "X(12)"
+  INITIAL ""
+  LABEL "Pedido Cliente"
+  POSITION 3
+  MAX-WIDTH 24
+  ORDER 110
+
+ADD FIELD "nr-shopify" OF "es-spf-ped-venda" AS character 
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Pedido Shopify"
+  POSITION 4
+  MAX-WIDTH 16
+  COLUMN-LABEL "Pedido Shopify"
+  ORDER 120
+
+ADD FIELD "dt-pagamento" OF "es-spf-ped-venda" AS date 
+  FORMAT "99/99/9999"
+  INITIAL ?
+  LABEL "Data Pagamento"
+  POSITION 5
+  MAX-WIDTH 4
+  COLUMN-LABEL "Dt Pagto"
+  ORDER 130
+
+ADD INDEX "pedido" ON "es-spf-ped-venda" 
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "nome-abrev" ASCENDING 
+  INDEX-FIELD "nr-pedcli" ASCENDING 
+
+ADD INDEX "shopify" ON "es-spf-ped-venda" 
+  AREA "Schema Area"
+  INDEX-FIELD "nr-shopify" ASCENDING 

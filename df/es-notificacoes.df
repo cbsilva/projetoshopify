@@ -1,8 +1,8 @@
-ADD TABLE "es-notificacoes-spf"
+ADD TABLE "es-notificacoes"
   AREA "Schema Area"
-  DUMP-NAME "es-notificacoes-spf"
+  DUMP-NAME "es-notificacoes"
 
-ADD FIELD "cod_mensagem" OF "es-notificacoes-spf" AS integer 
+ADD FIELD "cod_mensagem" OF "es-notificacoes" AS integer 
   FORMAT ">>>>>>>9"
   INITIAL "0"
   LABEL "C¢digo Mensagem"
@@ -10,7 +10,7 @@ ADD FIELD "cod_mensagem" OF "es-notificacoes-spf" AS integer
   MAX-WIDTH 4
   ORDER 10
 
-ADD FIELD "flg_comercial" OF "es-notificacoes-spf" AS logical 
+ADD FIELD "flg_comercial" OF "es-notificacoes" AS logical 
   FORMAT "yes/no"
   INITIAL "no"
   LABEL "Comercial"
@@ -18,7 +18,7 @@ ADD FIELD "flg_comercial" OF "es-notificacoes-spf" AS logical
   MAX-WIDTH 1
   ORDER 20
 
-ADD FIELD "flg_financeiro" OF "es-notificacoes-spf" AS logical 
+ADD FIELD "flg_financeiro" OF "es-notificacoes" AS logical 
   FORMAT "yes/no"
   INITIAL "no"
   LABEL "Notifica Financeiro"
@@ -26,7 +26,7 @@ ADD FIELD "flg_financeiro" OF "es-notificacoes-spf" AS logical
   MAX-WIDTH 1
   ORDER 30
 
-ADD FIELD "flg_fiscal" OF "es-notificacoes-spf" AS logical 
+ADD FIELD "flg_fiscal" OF "es-notificacoes" AS logical 
   FORMAT "yes/no"
   INITIAL "no"
   LABEL "Notifica Fiscal"
@@ -34,7 +34,7 @@ ADD FIELD "flg_fiscal" OF "es-notificacoes-spf" AS logical
   MAX-WIDTH 1
   ORDER 40
 
-ADD FIELD "lst_mail" OF "es-notificacoes-spf" AS character 
+ADD FIELD "lst_mail" OF "es-notificacoes" AS character 
   FORMAT "x(40)"
   INITIAL ""
   LABEL "Lista Distr."
@@ -42,7 +42,7 @@ ADD FIELD "lst_mail" OF "es-notificacoes-spf" AS character
   MAX-WIDTH 80
   ORDER 50
 
-ADD FIELD "flg_logistica" OF "es-notificacoes-spf" AS logical 
+ADD FIELD "flg_logistica" OF "es-notificacoes" AS logical 
   FORMAT "yes/no"
   INITIAL "no"
   LABEL "Log¡stica"
@@ -50,7 +50,7 @@ ADD FIELD "flg_logistica" OF "es-notificacoes-spf" AS logical
   MAX-WIDTH 1
   ORDER 25
 
-ADD INDEX "pk_notificacao" ON "es-notificacoes-spf" 
+ADD INDEX "pk_notificacao" ON "es-notificacoes" 
   AREA "Schema Area"
   UNIQUE
   PRIMARY

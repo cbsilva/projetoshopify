@@ -1,0 +1,37 @@
+ADD TABLE "es-spf-cliente"
+  AREA "Schema Area"
+  DESCRIPTION "Tabela de Especifica para Clientes Shopify"
+  DUMP-NAME "es-spf-cliente"
+
+ADD FIELD "cod-emitente" OF "es-spf-cliente" AS integer 
+  FORMAT ">,>>>,>>9"
+  INITIAL "0"
+  LABEL "Codigo Emitente"
+  POSITION 2
+  MAX-WIDTH 4
+  COLUMN-LABEL "Codigo Emitente"
+  ORDER 10
+
+ADD FIELD "shopify-id" OF "es-spf-cliente" AS character 
+  FORMAT "x(30)"
+  INITIAL ""
+  LABEL "Codigo Shopify"
+  POSITION 3
+  MAX-WIDTH 80
+  COLUMN-LABEL "Codigo Shopify"
+  ORDER 20
+
+
+ADD INDEX "ch-emitente" ON "es-spf-cliente" 
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "cod-emitente" ASCENDING 
+  INDEX-FIELD "shopify-id" ASCENDING 
+
+
+.
+PSC
+cpstream=ibm850
+.
+0000026135

@@ -1,8 +1,8 @@
-ADD TABLE "es-api-param-ped-spf"
+ADD TABLE "es-api-param-ped"
   AREA "Schema Area"
-  DUMP-NAME "es-api-param-ped-spf"
+  DUMP-NAME "es-api-param-ped"
 
-ADD FIELD "cod-estabel" OF "es-api-param-ped-spf" AS character 
+ADD FIELD "cod-estabel" OF "es-api-param-ped" AS character 
   FORMAT "x(5)"
   INITIAL ""
   LABEL "Estabelecimento"
@@ -12,7 +12,7 @@ ADD FIELD "cod-estabel" OF "es-api-param-ped-spf" AS character
   HELP "C¢digo do estabelecimento"
   ORDER 10
 
-ADD FIELD "mo-codigo" OF "es-api-param-ped-spf" AS integer 
+ADD FIELD "mo-codigo" OF "es-api-param-ped" AS integer 
   FORMAT ">9"
   INITIAL "0"
   LABEL "Moeda"
